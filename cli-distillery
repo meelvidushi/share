@@ -1,0 +1,1256 @@
+# cli_distillery
+The command line interface for distillery.
+
+## Table of Contents
+
+- [Setup](#setup)
+  - [Setup Lowside](#setup-lowside)
+  - [Setup Highside](#setup-highside)
+- [General Usage](#general-usage)
+- [System Migration](#system-migration)
+  - [push_to_plat.py](#push_to_platpy)
+- [Scripts](#scripts)
+  - [push to plat](#push-to-plat)
+  - [upgrade system model](#upgrade-system-model)
+  - [load test](#load-test-burst-verify)
+- [Commands](#commands)
+  - [System Management](#system-management)
+    - [new](#new)
+    - [update](#update)
+    - [delete-system](#delete-system)
+    - [bump-prod](#bump-prod)
+  - [Evaluation Commands](#evaluation-commands)
+    - [new-with-evals](#new-with-evals)
+    - [create-test-set](#create-test-set)
+    - [create-example](#create-example)
+  - [Analysis & Visualization](#analysis--visualization)
+    - [graph](#graph)
+    - [map](#map)
+    - [compare-runs](#compare-runs)
+    - [suite-feedback](#suite-feedback)
+    - [duplicate-cases](#duplicate-cases)
+    - [determine-consistency](#determine-consistency)
+    - [analyze-consistency](#analyze-consistency)
+    - [run-error-reflect](#run-error-reflect)
+  - [Component Management](#component-management)
+    - [get-context-definition](#get-context-definition)
+    - [delete-context-definition](#delete-context-definition)
+    - [get-tool](#get-tool)
+    - [delete-tool](#delete-tool)
+    - [get-executor](#get-executor)
+  - [Utilities](#utilities)
+    - [routine-json](#routine-json)
+    - [generate-recommendation](#generate-recommendation)
+    - [export-subroutine-results](#export-subroutine-results)
+- [Helper Files](#helper-files)
+  - [Utility Scripts](#utility-scripts)
+    - [`verify-run-files`](#verify-run-files)
+- [Testing](#testing)
+  - [verify-generate-recommendation](#verify-generate-recommendation)
+  - [verify-genedit](#verify-genedit)
+  - [verify-all](#verify-all)
+- [Troubleshooting](#troubleshooting)
+
+## Overview
+
+`cli_distillery` is a Python-based command-line tool for interacting with the Distillery API. It allows users to manage systems, workflows, context definitions, tools, and test suite runs. Additionally, it includes utilities for system migration between environments.
+
+## Setup Lowside
+
+1.  **Clone the repository (if applicable):**
+    ```bash
+    git clone <repository_url>
+    cd cli_distillery
+    ```
+2.  **Authentication Token:**
+    Most commands require a Bearer token for API authentication. This token should be passed using the `--token` or `-t` option.
+
+    ```bash
+    export GOLD_TOKEN={token}
+    ```
+
+3.  **Environment:**
+    Specify the API environment (e.g., "gold", "dev-high", "dev-low", "uat", "plat", "stage", "local") using the `--environment` or `-e` option. The default is "dev-high".
+
+4.  **Git hooks (pre-commit):**
+    ```bash
+    brew install pre-commit   # or: pip install pre-commit
+    pre-commit install
+    ```
+
+### If using Poetry 
+
+```bash
+poetry install; 
+poetry shell
+```
+
+```bash
+cd cli_distillery/;
+poetry run python cli.py {command}
+```
+
+## Setup Highside 
+
+1. Set up the environment variables needed. In `~/.zshrc`, add:
+    ```bash
+    export REQUESTS_CA_BUNDLE=/Users/{AMxxxx}/root.pem
+    export SSL_CERT_FILE=/Users/{AMxxxx}/root.pem
+    export OPENAI_BASE_URL={1 password under Eagle Dev OpenAI Endpoint}
+    export OPENAI_API_KEY={1 password under Eagle Dev OpenAI Endpoint}
+    ```
+2. Create your conda environment
+    ```bash
+    conda env create -f environment.yml
+    ```
+3. Activate the environment
+    ```bash
+    conda activate eagle
+    ```
+4. Install `cli_distillery` inside your conda environment
+    ```bash
+    pip install -e .
+    ```
+
+**IMPORTANT NOTE**:
+- is using conda, all examples below should just use `python`, not `poetry run python`
+- make sure your conda enviornment is activated (it should say `(eagle)` in your terminal)
+
+
+## Scripts
+
+### push to plat
+
+Migrate a system version from one environment to another by downloading a zip export and importing it to the destination environment.
+
+**Usage:**
+```bash
+python push_to_plat.py [OPTIONS]
+```
+
+**Required Options:**
+*   `--token TEXT`: Bearer token for API authentication.
+
+*Exactly one of the following **system selectors** must be provided:*
+*   `--system-name TEXT`: Name of a **single** system to migrate (looked up in both environments).
+*   `--dict-file PATH`: Path to a JSON file containing a mapping of `{system_name: source_branch}` for **batch migrations**.
+
+*If `--system-name` is used, you must also provide **exactly one** of:*
+*   `--save-id TEXT`: Explicit system version (`save-id`) to migrate – **takes precedence if both given**
+*   `--branch TEXT`: Branch name whose **latest** version will be migrated
+
+**Optional Options:**
+*   `--src-env [uat|plat|local|perf]`: Source environment (default: `uat`).
+*   `--dest-env [uat|plat|local|perf]`: Destination environment (default: `plat`).
+*   `--dest-branch TEXT`: Destination branch name (default: `uat-to-plat-deployment`). Timestamp appended automatically.
+*   `--output-file TEXT`: Output filename for zip (default: `system_export.zip`). Timestamp appended automatically.
+*   `--download-timeout INTEGER`: Download timeout in seconds (default: `300`).
+*   `--upload-timeout INTEGER`: Upload timeout in seconds (default: `300`).
+
+**Features:**
+- Automatic system ID lookup in both environments
+- Optionally resolve version from branch latest-version
+- **Batch mode** – migrate multiple systems in one run using `--dict-file`
+- **Auto-create** destination system if it does not already exist
+- Zip validation & file-size reporting
+- Timestamped zip and branch names for uniqueness
+- Automatic cleanup of temporary files
+- Comprehensive timeout & error handling
+
+**Examples:**
+
+Migrate using explicit version:
+```bash
+python push_to_plat.py \
+  --token $GOLD_TOKEN \
+  --system-name "LumbarMRI-NonSpecificLowBackPain-og" \
+  --save-id 2
+```
+
+Migrate using branch name (latest on branch):
+```bash
+python push_to_plat.py \
+  --token $GOLD_TOKEN \
+  --system-name "LumbarMRI-NonSpecificLowBackPain-og" \
+  --branch Prod
+```
+
+Custom environments & branch:
+```bash
+python push_to_plat.py \
+  --token $GOLD_TOKEN \
+  --src-env uat \
+  --dest-env plat \
+  --system-name "CG-MED-30" \
+  --branch Prod \
+  --dest-branch production-deployment
+```
+
+Batch migration with a mapping file:
+```bash
+python push_to_plat.py \
+  --token $GOLD_TOKEN \
+  --dict-file systems_to_migrate.json
+```
+
+**Migration Flow:**
+1. **System ID Lookup** – resolves system IDs in both environments
+2. **Version Selection** – uses `save-id` or derives latest from `branch`
+3. **Download** – downloads & validates zip from source
+4. **Upload** – uploads zip to destination with timestamped branch name
+5. **Cleanup** – removes temporary zip on success
+
+**Output Example:**
+```
+=== SYSTEM MIGRATION FLOW ===
+Source environment: UAT
+Destination environment: PLAT
+System name: CG-MED-30
+Version ID: 5
+Base destination branch: production-deployment
+
+Step 1: Getting source system ID...
+Found system ID: abc123... for 'CG-MED-30' in UAT
+
+Step 2: Getting destination system ID...
+Found system ID: def456... for 'CG-MED-30' in PLAT
+
+Step 3: Downloading zip file from source...
+✅ Successfully downloaded zip file as system_export-2025-01-11_14:30:25.zip
+📊 File size: 2,547,832 bytes (2.43 MB)
+✅ Zip file validation successful - contains 127 files
+
+Step 4: Uploading zip file to destination...
+Timestamped branch name: production-deployment-2025-01-11_14:30:25
+✅ Upload request successful to PLAT
+📝 Import will continue processing in the background. Check the UI for completion status.
+
+✅ Process completed successfully!
+```
+
+### upgrade system model
+
+A comprehensive tool for upgrading all branches of an AI system from one model to another. Specifically designed to handle mass model migrations like upgrading from GPT-4o to O3 across entire systems.
+
+**Note:** This script DOES NOT replace the system prompt.
+
+**Usage:**
+```bash
+python cli_distillery/scripts/upgrade_system_model.py [OPTIONS]
+```
+
+**Required Options:**
+*   `--token TEXT`: Bearer token for API authentication.
+*   `--system-id TEXT`: ID of the system to upgrade.
+*   `--new-model TEXT`: Target model to upgrade to (e.g., 'o3-openai').
+
+**Optional Options:**
+*   `--old-model TEXT`: Source model to upgrade from (e.g., 'gpt-4o-openai'). If specified, only branches using this model will be upgraded.
+*   `--environment [gold|dev|uat|plat|perf]`: API environment to use (default: 'gold').
+*   `--include-archived`: Include archived branches in the upgrade.
+
+**✨ Key Features:**
+
+- **🔍 Automatic Branch Discovery**: Automatically fetches ALL branches for a system using pagination
+- **🧠 Smart Processing**: 
+  - Skips branches already using the target model
+  - Optionally specify source model to only upgrade specific branches
+  - Preserves all existing components from head version
+- **🛡️ Robust Error Handling**: 
+  - Continues processing if individual branches fail
+  - Detailed error reporting per branch
+  - Comprehensive summary with success/skip/failure counts
+
+**🎯 Use Cases:**
+
+**Primary: GPT-4o → O3 Upgrade**
+```bash
+python cli_distillery/scripts/upgrade_system_model.py \
+  --token "your_token" \
+  --system-id "system-uuid" \
+  --old-model "gpt-4o-openai" \
+  --new-model "o3-openai" \
+  --environment perf
+```
+
+**Upgrade All Branches to New Model**
+```bash
+python cli_distillery/scripts/upgrade_system_model.py \
+  --token "your_token" \
+  --system-id "system-uuid" \
+  --new-model "o3-openai" \
+  --environment perf
+```
+
+**Include Archived Branches**
+```bash
+python cli_distillery/scripts/upgrade_system_model.py \
+  --token "your_token" \
+  --system-id "system-uuid" \
+  --old-model "gpt-4o-openai" \
+  --new-model "o3-openai" \
+  --include-archived \
+  --environment perf
+```
+
+**🔧 How It Works:**
+
+1. **Branch Discovery**: Uses GetBranches API with pagination to fetch all branches
+2. **Head Version Identification**: Gets latest_version for each branch
+3. **Component Extraction**: Fetches components from head version using GetSystemVersion
+4. **Model Check**: Compares current model with target model
+5. **Version Creation**: Creates new version with CreateSystemVersion using:
+   - Same components as head version
+   - New model specification
+   - Head version as parent
+   - Correct branch_id for targeting
+
+**📈 Example Output:**
+
+```
+🚀 AI System Model Upgrade Tool
+============================================================
+System ID: 80eab3a6-b7f7-4818-8b83-c0551b5abd28
+Environment: perf
+Upgrade: gpt-4o-openai → o3-openai
+============================================================
+📋 Processing 12 branches...
+
+[1/12] ──────────────────────────────────────────────────
+Processing branch 'main' (latest version: 45)
+📦 Found 8 components
+🔄 Upgrading from gpt-4o-openai to o3-openai
+✅ Created version 46 with o3-openai
+
+[2/12] ──────────────────────────────────────────────────
+Processing branch 'experiment-v2' (latest version: 23)
+⚠️  Branch 'experiment-v2' already using o3-openai, skipping
+
+============================================================
+📊 UPGRADE SUMMARY
+============================================================
+✅ Successfully upgraded: 8
+⏭️  Skipped: 3
+❌ Failed: 1
+
+🎉 Successfully upgraded branches:
+• main: gpt-4o-openai → o3-openai (v45 → v46)
+• test-suite-1: gpt-4o-openai → o3-openai (v12 → v13)
+• feature-branch: gpt-4o-openai → o3-openai (v8 → v9)
+```
+
+**🆚 Advantages Over Manual Process:**
+
+| Manual Process | Automated Script |
+|----------------|------------------|
+| ❌ List branches manually | ✅ Auto-discovers all branches |
+| ❌ Get head version for each | ✅ Automatically gets latest_version |
+| ❌ Copy components manually | ✅ Automatically preserves components |
+| ❌ Risk of missing branches | ✅ Processes ALL branches |
+| ❌ No duplicate prevention | ✅ Skips already-upgraded branches |
+| ❌ Manual error handling | ✅ Robust error handling & reporting |
+| ❌ Time-consuming for many branches | ✅ Fast parallel processing |
+
+**🎯 Perfect For:**
+- **Model Migrations**: GPT-4o → O3, GPT-4 → GPT-4o, etc.
+- **Test Suite Upgrades**: Ensuring all test branches use latest models
+- **System Modernization**: Bulk upgrades across development lifecycle
+- **Emergency Model Changes**: Quick rollout of model fixes/improvements
+
+This tool transforms a tedious manual process into a single command operation! 🚀
+
+### mcg icd10 scraper
+
+Scrape ICD-10 codes and guideline titles from MCG CareWebQI.
+
+**Usage:**
+```bash
+python cli_distillery/scripts/mcg_icd10_scraper/mcg_scraper.py
+python cli_distillery/scripts/mcg_icd10_scraper/mcg_title_scraper.py
+```
+
+**Required Options:**
+*   `SESSION_ID`: Browser session cookie (update `COOKIE` variable in scripts)
+
+
+**Getting your `SESSION_ID` cookie:**
+1. Log in to <https://careweb.careguidelines.com/ed29/index.html> (credentials are stored in 1Password).
+2. Open your browser DevTools → **Application / Storage** → **Cookies** → `careweb.careguidelines.com`.
+3. Copy the value in the `SESSION_ID` row.
+4. Paste that value into the `COOKIE` constant at the top of **both** `mcg_scraper.py` and `mcg_title_scraper.py`.
+
+Without a valid cookie the site returns the login page HTML and the scraper will raise "Guideline not found" errors.
+
+**Features:**
+- Extract ICD-10 codes for MCG guidelines with smart "main" code selection
+- Fetch guideline titles
+- Bulk processing with progress indicators
+- JSON output to `output/` directory
+
+**Example:**
+```bash
+# Update SESSION_ID in scripts, then:
+python cli_distillery/scripts/mcg_icd10_scraper/mcg_scraper.py
+```
+
+**Output Example:**
+```
+[1/37] ✓ M-595
+[2/37] ✓ M-505
+...
+Saved mapping to output/policy_icd10_mapping.json
+Saved descriptions to output/icd10_descriptions.json
+```
+
+### Load Test Burst Verify
+
+Run a true burst of generate-recommendation verifications using a configured test-name and aggregate results to JSON.
+
+**Script path:** `cli_distillery/cli_distillery/scripts/burst_verify_load_test.py`
+
+**Output directory (default):** `cli_distillery/cli_distillery/scripts/burst_results/<env>_<test>_<timestamp>/`
+- `summary.json`: overall run statistics
+- `results.json`: per-request results  
+- `failures.json`: failed requests only (if any)
+- `failure_breakdown.json`: failure counts by category (if any)
+
+**Usage:**
+```bash
+python cli_distillery/cli_distillery/scripts/burst_verify_load_test.py \
+  --token <TOKEN> \
+  --environment <ENV> \
+  --test-name <TEST_NAME> \
+  [--count 500] [--concurrency 500] [--timeout 200] [--no-verify-ssl] \
+  [--outdir cli_distillery/cli_distillery/scripts/burst_results]
+```
+
+**Required Options:**
+- `--token`: Bearer token for API authentication
+- `--environment`: one of the environments supported by the CLI (e.g., `local`, `perf`, `uat`, `plat`)
+- `--test-name`: a test case name defined for that environment's test config
+
+**Optional Options:**
+- `--count`: total requests to run (default: 500)
+- `--concurrency`: concurrent requests (default: 500). Set equal to `--count` for a true burst
+- `--timeout`: seconds to wait for each recommendation to complete (default: 200)
+- `--no-verify-ssl`: disable TLS verification (useful in some highside setups)
+- `--outdir`: base folder for results (default shown above)
+
+**Examples:**
+
+Small sanity burst (10 concurrent, 10 total):
+```bash
+python cli_distillery/cli_distillery/scripts/burst_verify_load_test.py \
+  --token "$GOLD_TOKEN" --environment local --test-name "MARIE_8" \
+  --count 10 --concurrency 10
+```
+
+Full 500-request burst:
+```bash
+python cli_distillery/cli_distillery/scripts/burst_verify_load_test.py \
+  --token "$GOLD_TOKEN" --environment local --test-name "MARIE_8" \
+  --count 500 --concurrency 500
+```
+
+**Key Notes:**
+- `--concurrency` controls how many requests run simultaneously; `--count` is total requests. Set them equal for a true burst; use a smaller `--concurrency` to run in waves.
+- The test-name must exist in the environment's test config (e.g., `local` and `perf` are provided). If you need other environments, add a matching test config or adapt the script to load a payload file.
+- Each request follows the same success/failure logic as `verify-generate-recommendation`: POST to `/generate-recommendation` → poll `/results/{id}` until COMPLETED (success) or FAILED/ERROR/TIMEOUT (failure).
+
+## Commands
+
+Below is a list of available commands and their options.
+
+If you want to add an endpoint, the rule of thumb for the folder names is to use the `base-path` in distillery as the folder name, and the file name should be the endpoint itself. 
+
+### `update`
+
+Update a system by ID. This command can update various components of a system, including routines, policies, intermediate representations (IR), and tools.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--routine PATH`: Path to the routine JSON file.
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `dev-high`)
+*   `--system-id TEXT`: System ID to update.
+*   `--guideline-name TEXT`: Name of the guideline to select system from.
+*   `--workflow-id TEXT`: Workflow ID to update (if not provided, derived automatically if unique).
+*   `--branch-id TEXT`: Branch ID to update. (Required)
+*   `--policy TEXT`: Path to the policy (must be .pdf or .md). PDFs will be converted to markdown before uploading.
+*   `--adopt-ir`: Adopt IR in the system.
+*   `--update-ir-from-system-version INTEGER`: Update IR template from the workflow at the system version specified.
+*   `--ir-policy-pdf TEXT`: Path to the IR policy PDF file (must be .pdf).
+*   `--tool-id TEXT`: Tool ID to update.
+*   `--tool-executor-path PATH`: Path to the tool executor TypeScript file (.ts).
+*   `--adopt-new-tool TEXT`: Adopt a new tool in the system. Provide the name of the tool to adopt.
+*   `--tool-system-template TEXT`: Path to the tool call system template file.
+*   `--tool-user-template TEXT`: Path to the tool call user template file.
+*   `--bump-prod`: Bump the prod alias to the latest version after updating. (Default: `False`)
+*   `--metadata`: Edit the metadata of the workflow.
+*   `--extend-config TEXT`: JSON string to extend/update the current configuration. Adds new keys or updates existing ones.
+*   `--set-config TEXT`: JSON string to replace the entire configuration.
+
+**Note:** At least one of `--routine`, `--policy`, `--adopt-ir`, `--update-ir-from-system-version`, `--tool-executor-path`, `--tool-system-template`, `--tool-user-template`, `--metadata`, `--extend-config`, or `--set-config` must be specified.
+
+**Update a workflow in a system:**
+```bash
+poetry run python cli.py update --token="YOUR_TOKEN" --system-id="SYSTEM_ID_HERE" --branch-id="BRANCH_ID_HERE" --routine="/path/to/updated_routine.json" --environment="dev-high"
+```
+
+**Update system configuration (extend/merge):**
+```bash
+### Add new configuration keys or update existing ones
+# EXAMPLE: Adding template chunking
+python cli.py update --token=$GOLD_TOKEN --system-id="SYSTEM_ID_HERE" --branch-id="BRANCH_ID_HERE" --extend-config='{"enable_template_chunking": true, "ir_dp_chunk_size": 5}' --environment="uat"
+```
+
+**Update system configuration (replace):**
+```bash
+# Replace the entire configuration
+poetry run python cli.py update --token="YOUR_TOKEN" --system-id="SYSTEM_ID_HERE" --branch-id="BRANCH_ID_HERE" --set-config='{"key1": "value1", "key2": "value2"}' --environment="dev-high"
+```
+
+**Combine configuration update with prod bump:**
+```bash
+# Update configuration and bump prod alias in one command
+poetry run python cli.py update --token="YOUR_TOKEN" --system-id="SYSTEM_ID_HERE" --branch-id="BRANCH_ID_HERE" --extend-config='{"feature": "enabled"}' --bump-prod --environment="dev-high"
+```
+
+### `delete-system`
+
+Delete a system by ID.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--system-id TEXT`: System ID to delete. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use.
+
+### `new`
+
+Create a new system with a routine JSON file.
+
+**Options:**
+
+*   `--token TEXT`: Bearer token for API authentication. (Required)
+*   `--routine PATH`: Path to the routine JSON file. (Required)
+*   `--environment [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `dev-high`)
+*   `--name TEXT`: Name for the new system. (Required)
+*   `--system-template TEXT`: Path to the system template file. (Default: `./prompts/routine_executor_system.jinja2`)
+*   `--user-template TEXT`: Path to the user template file. (Default: `./routine_executor_user.jinja2`)
+*   `--policy TEXT`: Path to the policy (must be .pdf or .md). PDFs will be converted to markdown before uploading. (Required)
+*   `--overwrite TEXT`: System ID to overwrite (delete). Will still create new system id.
+
+Example Usage: 
+
+```bash
+poetry run python cli.py new --token $GOLD_TOKEN --policy 'data/arthritis.pdf' --environment local --name {name} --routine 'data/old_imaging_of_the_spine_v2.json'
+```
+
+```bash
+poetry run python cli.py new --token "YOUR_TOKEN" --name "My New System" --routine "/path/to/my_routine.json" --policy "/path/to/policy.pdf" --environment "dev-high"
+```
+
+## Evaluation Commands
+
+The evaluation commands allow you to create systems with built-in test sets and examples for testing and validation. These commands provide a streamlined workflow for setting up complete evaluation environments.
+
+### `new-with-evals`
+
+Create a new system with routine JSON file and optional evaluations (test sets and examples). This command orchestrates the creation of a system followed by test sets and examples in a single workflow.
+
+**Options:**
+
+*   `--token TEXT`: Bearer token for API authentication. (Required)
+*   `--routine PATH`: Path to the routine JSON file. (Required)
+*   `--environment [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `dev-high`)
+*   `--name TEXT`: Name for the new system. (Required)
+*   `--system-template TEXT`: Path to the system template file. (Default: `prompts/routine_executor_system_o1.jinja2`)
+*   `--user-template TEXT`: Path to the user template file. (Default: `prompts/routine_executor_user.jinja2`)
+*   `--policy TEXT`: Path to the policy (must be .pdf or .md). PDFs will be converted to markdown before uploading. (Required)
+*   `--overwrite TEXT`: System ID to overwrite (delete). Will still create new system id.
+*   `--test-set-config TEXT`: Path to JSON file containing test set configuration. (Default: `data/example_test_set_config.json`)
+*   `--example-config TEXT`: Path to JSON file containing example configuration. (Default: `data/example_example_config.json`)
+*   `--skip-test-set`: Skip creating test set.
+*   `--skip-examples`: Skip creating examples.
+*   `--num-examples INTEGER`: Number of examples to create (default: 1). Examples will be named UM1, UM2, etc.
+*   `--from-payload TEXT`: Path to JSON file containing payload data for Case JSON input value.
+
+**Example Usage:**
+
+```bash
+# Create system with default test set and 3 examples
+poetry run python cli.py new-with-evals --token $GOLD_TOKEN --name "My System with Evals" --routine "data/old_imaging_of_the_spine_v2.json" --policy "data/arthritis.pdf" --environment local --num-examples 3 
+
+# Create system only (skip evaluations)
+poetry run python cli.py new-with-evals \
+  --token $GOLD_TOKEN \
+  --name "My System" \
+  --routine "/path/to/routine.json" \
+  --policy "/path/to/policy.pdf" \
+  --skip-test-set \
+  --skip-examples
+```
+
+### `create-test-set`
+
+Create a test set for an existing system.
+
+**Options:**
+
+*   `--token TEXT`: Bearer token for API authentication. (Required)
+*   `--system-id TEXT`: System ID to create test set for. (Required)
+*   `--environment [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `dev-high`)
+*   `--config TEXT`: Path to JSON file containing test set configuration. (Default: `data/example_test_set_config.json`)
+*   `--name TEXT`: Name for the test set (overrides config).
+*   `--description TEXT`: Description for the test set (overrides config).
+
+**Example Usage:**
+
+```bash
+# Create test set with default config
+poetry run python cli.py create-test-set \
+  --token $GOLD_TOKEN \
+  --system-id "abc123-def456-ghi789" \
+  --environment dev-high
+
+# Create test set with custom name and description
+poetry run python cli.py create-test-set \
+  --token $GOLD_TOKEN \
+  --system-id "abc123-def456-ghi789" \
+  --name "My Custom Test Set" \
+  --description "Test set for regression testing"
+```
+
+### `create-example`
+
+Create examples for an existing test set.
+
+**Options:**
+
+*   `--token TEXT`: Bearer token for API authentication. (Required)
+*   `--system-id TEXT`: System ID to create example for. (Required)
+*   `--test-set-id TEXT`: Test set ID to create example in. (Required)
+*   `--environment [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `dev-high`)
+*   `--config TEXT`: Path to JSON file containing example configuration. (Default: `data/example_example_config.json`)
+*   `--name TEXT`: Name for the example (overrides config).
+*   `--policy-id TEXT`: Policy ID for the example.
+*   `--auth-id TEXT`: Auth ID for the example.
+*   `--ground-truth TEXT`: Ground truth value (APPROVED/NEEDS_REVIEW).
+*   `--from-payload TEXT`: Path to JSON file containing payload data for Case JSON input value.
+
+**Example Usage:**
+
+```bash
+# Create example with default config
+poetry run python cli_distillery/cli.py create-example --token $GOLD_TOKEN --system-id "abc123-def456-ghi789" --test-set-id "xyz789-abc123-def456" --environment dev-high
+
+# Create example with custom values
+poetry run python cli.py create-example \
+  --token $GOLD_TOKEN \
+  --system-id "abc123-def456-ghi789" \
+  --test-set-id "xyz789-abc123-def456" \
+  --name "UM001" \
+  --policy-id "POLICY_ABC" \
+  --auth-id "AUTH_001" \
+  --ground-truth "APPROVED"
+
+# Create example with payload from file
+poetry run python cli.py create-example \
+  --token $GOLD_TOKEN \
+  --system-id "abc123-def456-ghi789" \
+  --test-set-id "xyz789-abc123-def456" \
+  --from-payload "/path/to/case_payload.json"
+```
+
+**Configuration Files:**
+
+The evaluation commands use configuration files with sensible defaults:
+
+- **Test Set Config** (`data/example_test_set_config.json`): Defines the structure and headers for test sets
+- **Example Config** (`data/example_example_config.json`): Contains a sample case with realistic medical data
+
+You can customize these files or provide your own configuration files using the `--config` options.
+
+**Using Custom Payloads:**
+
+The `--from-payload` option allows you to inject custom JSON data into the "Case JSON" input of an example. This is useful when you want to:
+
+- Use real case data for testing
+- Create examples from existing payloads
+- Test with specific data scenarios
+
+The payload file should contain the JSON object that will be placed inside the `value.value` field of the "Case JSON" input. For example:
+
+```json
+{
+  "authId": "UM12345",
+  "runSequence": "1", 
+  "receivedDate": "2024-10-09T10:00:00Z",
+  "clientId": "HS",
+  "lineOfBusiness": "Commercial",
+  "memberData": {
+    "memberHCID": "67890",
+    "memberDob": "1985-03-15",
+    "memberGender": "F"
+  }
+}
+```
+
+When you use `--from-payload`, this data will automatically replace the default payload in the example configuration while preserving the overall structure.
+
+### `bump-prod`
+
+Bump the prod alias of a system to point to a specified version or the latest version.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--system-id TEXT`: System ID to update.
+*   `--guideline-name TEXT`: Guideline name to select system from.
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `dev-high`)
+*   `--version TEXT`: Version to bump prod alias to. If not specified, the latest version will be used.
+
+### `graph`
+
+Generate a flowchart PDF from a routine JSON file or all JSON files in a directory.
+
+**Options:**
+
+*   `--routine PATH`: Path to the routine JSON file or directory. (Required)
+*   `--open`: Open the generated graph file.
+
+### `map`
+
+Map a routine JSON file to a policy PDF, highlighting relevant sections.
+
+**Options:**
+
+*   `--routine PATH`: Path to the routine JSON file. (Required)
+*   `--policy-pdf TEXT`: Path to the policy PDF file. (Required)
+*   `--open`: Open the generated map file.
+*   `--ocr`: Use OCR to extract text from the policy PDF.
+
+### `compare-runs`
+
+Compare metrics between two test suite runs and identify flipped test cases.
+
+**Arguments:**
+
+*   `RUN_ID_1`: ID of the first test suite run.
+*   `RUN_ID_2`: ID of the second test suite run.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--include_detailed_analysis`: Flag for including detailed step analysis of the traversal using LLM, to help user understand reasoning behind why results of 2 runs are different (Default False). When True, will print out detailed analysis in terminal along with saving a local CSV file containing differences in evidence retrieval, reasoning, and workflow for each mismatched step of a flipped test case between the two runs. 
+
+### `suite-feedback`
+
+Retrieve all feedback for a specific test suite ID.
+
+**Argument:**
+
+*   `SUITE_ID`: The ID of the test suite.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [local|dev-high|dev-low|uat|plat|stage|gold]`: API environment to use. (Default: `uat`)
+*   `--output TEXT`: Output file path for the feedback data (default: `suite_name_feedback.json`).
+
+**Get feedback for a test suite:**
+```bash
+python cli.py suite-feedback "SUITE_ID_HERE" --token "YOUR_TOKEN" --environment "uat" --output "feedback_report.json"
+```
+
+### `routine-json`
+
+Retrieve a routine JSON for a specific system ID and version.
+
+**Options:**
+
+*   `--system-id TEXT`: System ID to retrieve routine from. (Required)
+*   `--system-version INTEGER`: System version to retrieve. (Required)
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--output TEXT`: Output file path for the routine JSON (default: `system_id_routine.json`).
+
+### `duplicate-cases`
+
+Duplicate test cases from a test suite with the specified number of repetitions.
+
+**Options:**
+
+*   `--test-suite-id TEXT`: ID of the test suite to duplicate cases from.
+*   `--guideline-name TEXT`: Name of the guideline to select test suite from.
+*   `--n INTEGER`: Number of times to duplicate each test case. (Required)
+*   `--approved INTEGER`: Number of approved cases to sample (must be used with `--needs-review`, 0 means none, omit for all).
+*   `--needs-review INTEGER`: Number of `needs_review` cases to sample (must be used with `--approved`, 0 means none, omit for all).
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--set-name TEXT`: Name for the new set of cases (generated automatically if not provided).
+
+### `determine-consistency`
+
+Determine consistency of results from test runs containing duplicate cases.
+
+**Options:**
+
+*   `--run-ids TEXT`: Comma-separated list of run IDs for duplicate consistency analysis (e.g., 'id1,id2,id3').
+*   `--run-id TEXT`: Single run ID for duplicate consistency analysis.
+*   `--guideline-name TEXT`: Name of the guideline to select runs from.
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--output TEXT`: Output file path for the analysis report (default: `consistency_{first_run_id}.csv`).
+*   `--deterministic-only`: Only calculate decision and traversal scores, skip reasoning and evidence analysis.
+
+### `analyze-consistency`
+
+Analyze consistency of results from a duplicate run test suite. Generates a report with problematic cases and steps.
+
+**Options:**
+
+*   `--run-id TEXT`: Run id for duplicate consistency. (Required)
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+
+### `verify-run`
+
+Validate every test-suite case in a run to ensure the LLM's reported step
+sequence is a legal traversal of the workflow.
+
+**Options:**
+
+* `RUN_ID` (argument) – UUID of the **run** to verify. (Required)
+* `--token, -t TEXT` – Bearer token for API authentication. (Required)
+* `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]` – API environment (default `uat`). (Required)
+* `--verbose` – Print the path to every dumped result JSON and a ✓ / ✗ line for every case, plus helpful urls for accessing workflow/run on the frontend
+* `--output PATH` – Path to write a JSON report (`{ runId, consistent, failures[] }`).
+
+**Example Usage:**
+
+```bash
+poetry run python cli.py verify-run 1650e4e5-2b68-42a4-89ed-b31e251a672e \
+       --token $GOLD_TOKEN --environment local --verbose
+```
+
+### `run-error-reflect`
+
+Run error reflection analysis on test suite results to identify patterns and generate suggestions for improvement based on false positives and/or false negatives.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--test-suite-run-id TEXT`: UUID of the test suite run to analyze. (Required)
+*   `--analysis-type [fp|fn|both]`: Type of analysis to perform (fp=false positives, fn=false negatives, both=both types).
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+
+**Example Usage:**
+
+```bash
+poetry run python cli.py run-error-reflect --token $GOLD_TOKEN --test-suite-run-id 99f76af6-302c-4058-ab4b-98ec44437724 --environment local
+```
+
+### `get-context-definition`
+
+Get context definitions for a system based on guideline name.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--guideline-name TEXT`: Name of the guideline to select system from. (Required)
+
+### `delete-context-definition`
+
+Delete a context definition from a system.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--guideline-name TEXT`: Name of the guideline to select system from.
+*   `--system-id TEXT`: System ID containing the context definition.
+*   `--context-definition-id TEXT`: Context definition ID to delete.
+*   `--at-system-version INTEGER`: Delete the context definition only at the system version specified.
+
+### `get-tool`
+
+Get tools for a system based on guideline name.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--guideline-name TEXT`: Name of the guideline to select system from. (Required)
+
+### `delete-tool`
+
+Delete a tool from a system.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--guideline-name TEXT`: Name of the guideline to select system from.
+*   `--system-id TEXT`: System ID containing the tool.
+*   `--tool-id TEXT`: Tool ID to delete.
+
+### `get-executor`
+
+Get executor information for systems.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--guideline-name TEXT`: Name of the guideline to select system from.
+*   `--system-id TEXT`: System ID to get executor information for.
+*   `--all`: Get information for all systems.
+
+**Usage Example:**
+
+If you want to get information on what executor models are being used in an environment:
+
+```bash
+python cli.py get-executor --token $GOLD_TOKEN --environment uat --all
+```
+
+### `generate-recommendation`
+
+The command generates a recommendation by making an API call with the specified payload. 
+
+**Note:** This doesn't test end-to-end if the recommendation is successful. It only tests that the `generate-recommendation` endpoint itself returns a 200. If you want an end-to-end test, refer to `verify-generate-recommendation`. 
+
+#### Usage
+
+#### Required Options
+
+- `--token`, `-t`: Bearer token for API authentication
+- `--payload`, `-p`: Path to the payload file 
+
+#### Optional Options
+
+- `--environment`, `-e`: API environment to use (default: "local")
+
+#### Examples
+
+Generate a recommendation with specified payload path file: 
+```bash
+poetry run python cli.py generate-recommendation --token $GOLD_TOKEN --payload {path}
+```
+
+### `export-subroutine-results`
+
+Export subroutine results for a test run to CSV format.
+
+**Options:**
+
+*   `--token, -t TEXT`: Bearer token for API authentication. (Required)
+*   `--environment, -e [gold|dev-high|dev-low|uat|plat|stage|local]`: API environment to use. (Default: `uat`)
+*   `--guideline-name TEXT`: Name of the guideline to select run from.
+*   `--run-id TEXT`: Run ID to export subroutine results for.
+*   `--output TEXT`: Output file path for the subroutine results (default: `{run_id}_subroutine_results.csv`).
+
+## Helper Files
+
+The `cli.py` script may rely on helper files or modules (e.g., `cli_utils.py`, `clx.py`, `psql.py`, `cli_ir/*`). Ensure these are present in the same directory or accessible in your Python path.
+
+## Utility Scripts
+
+### `verify-run-files`
+
+Validate a single prior-auth **result JSON** against a **workflow JSON** you already have on disk. No API calls are made.
+
+**Options**
+
+* `--workflow PATH` — Path to the workflow export JSON. (Required)
+* `--run PATH` — Path to the result JSON (must contain `result` or `conditions_evaluated`). (Required)
+* `--api-root TEXT` — Base API URL for link formatting (default: `http://localhost:8082`).
+* `--verbose` — Print Eagle UI links.
+
+**Example**
+
+```bash
+python cli_distillery/scripts/verify_run_files.py \
+  --workflow ./workflow.json \
+  --run ./result.json \
+  --verbose
+```
+
+## Testing
+
+### Payload Tests 
+
+How to run them: 
+
+1. Upload the payload of the tests you want to run following the structure mentioned below. It should be in `tests/payloads/{env name}/`.
+  - **GenEdit**: With the Network tab open, do a GenEdit change and copy the `payload` from the `GenEdit` call in the Network tab. It's easier to use "view source" and then copy paste that value into a JSON file.
+  - **Generate Recommendation**: Do the same thing as above or go to the "Executions" tab and copy paste a previous payload into a JSON file. 
+2. Go to `config/local.py` and enter the configuration of the tests you want to run locally. It should look like this. Use the Guideline Name, the type of test that you want to do, and the name of the payload file. 
+
+    ```python
+    from .base import TestConfig, TestPayloadDefinition, TestType
+
+    class LocalTestConfig(TestConfig):
+        """Test configuration for the local environment."""
+
+        def _load_test_cases(self):
+            """Load test cases specific to the local environment."""
+            self.test_cases = {
+                "M-160": TestPayloadDefinition(
+                    name="M-160 requested code",
+                    type=TestType.REQUESTED_CODES,
+                    payload_file="m-160.json",
+                ),
+            }
+    ```
+3. Run the `verify-generate-recommendation` command (or another) with your desired arguments, for example: 
+
+    ```bash
+    poetry run python cli.py verify-generate-recommendation --token $GOLD_TOKEN --environment local --from-payload
+    ```
+
+### `verify-generate-recommendation` 
+
+Use `verify-generate-recommendation` before after each deployment to `PERF` and before any deployment to `UAT`. 
+
+```bash
+usage: verify-generate-recommendation [-h] --token TOKEN [--environment {gold,dev-high,dev-low,uat,plat,stage,local}] [--debug] [--verify/--no-verify] [--timeout TIMEOUT] [--test-name TEST_NAME] [--test-type TEST_TYPE]
+
+Verify generate_recommendation functionality using JSON payloads from test configuration
+
+options:
+  -h, --help            show this help message and exit
+  --token TOKEN, -t TOKEN
+                        Bearer token for API authentication
+  --environment {gold,dev-high,dev-low,uat,plat,stage,local}, -e {gold,dev-high,dev-low,uat,plat,stage,local}
+                        API environment to use (default: local)
+  --debug               Print debug information
+  --verify/--no-verify  Verify SSL certificates (default: True)
+  --timeout TIMEOUT     Timeout in seconds for waiting for completion (default: 300)
+  --test-name TEST_NAME Test name to run
+  --test-type TEST_TYPE Test type to run
+```
+
+**Example Usage** 
+
+Run all defined tests for `CommandType.GENERATE_RECOMMENDATION`: 
+
+```bash
+poetry run python cli.py verify-generate-recommendation --token $GOLD_TOKEN --environment local 
+```
+
+For a specific `test_type`: 
+
+```bash
+poetry run python cli.py verify-generate-recommendation --token $GOLD_TOKEN --environment local --test-type requested_codes 
+```
+
+For a specific `--test-name` (which corresponds to the name of the test you want to run in your config file):
+
+```bash
+poetry run python cli.py verify-generate-recommendation --token $GOLD_TOKEN --environment local --test-name MARIE_9
+```
+
+With custom timeout and SSL verification disabled:
+
+```bash
+poetry run python cli.py verify-generate-recommendation --token $GOLD_TOKEN --environment perf --timeout 600 --no-verify
+```
+
+**File Structure**:
+```
+cli_distillery/
+├── tests/
+│   ├── config/
+│   │   ├── __init__.py
+│   │   ├── base.py           # Base test case definitions and types
+│   │   ├── local.py          # Local environment test cases
+│   │   ├── perf.py           # Perf environment test cases
+│   │   ├── uat.py            # UAT environment test cases
+│   │   └── gold.py           # Gold environment test cases
+│   └── payloads/
+│       ├── local/
+│       │   ├── hipaa.json
+│       │   └── ...
+│       ├── perf/
+│       │   ├── hipaa.json
+│       │   └── ...
+│       ├── uat/
+│       │   ├── hipaa.json
+│       │   └── ...
+│       └── gold/
+│           ├── hipaa.json
+│           └── ...
+```
+
+
+### `verify-genedit` 
+
+This command verifies the genedit functionality by running test cases and checking their completion status.
+
+#### Usage
+
+```bash
+poetry run python cli.py verify-genedit --token <TOKEN> --environment <ENV> [--debug] [--timeout TIMEOUT] [--payload <PATH>]
+```
+
+#### Options
+
+- `--token`, `-t`: Bearer token for API authentication (required)
+- `--environment`, `-e`: API environment to use (default: "local")
+  - Choices: gold, dev-high, dev-low, uat, plat, stage, local
+- `--payload`: Path to a JSON file containing a complete request payload (optional)
+- `--debug`: Enable debug mode to print the request payload (optional)
+- `--timeout`: Timeout in seconds for waiting for completion (default: 300)
+
+
+#### Output
+
+The command displays a table with the following columns:
+- Test Case: Name of the test case
+- Environment: Status indicator (✓ for success, ✗ for failure)
+- Message: Ending message from the execution (if any)
+
+#### Example
+
+```bash
+# Run all configured test cases
+poetry run python cli.py verify-genedit --token $GOLD_TOKEN --environment local 
+
+# Run a specific payload
+poetry run python cli.py verify-genedit --token $GOLD_TOKEN --environment local --payload path/to/payload.json
+
+# Run with debug output
+poetry run python cli.py verify-genedit --token $GOLD_TOKEN --environment local --debug
+
+# Run with custom timeout
+poetry run python cli.py verify-genedit --token $GOLD_TOKEN --environment perf --timeout 600
+```
+
+### `verify-all`
+
+This command runs both `verify-generate-recommendation` and `verify-genedit` commands in sequence, providing a comprehensive verification of both functionalities.
+
+#### Usage
+
+```bash
+poetry run python cli.py verify-all --token <TOKEN> --environment <ENV> [--debug] [--verify/--no-verify] [--timeout TIMEOUT]
+```
+
+#### Options
+
+- `--token`, `-t`: Bearer token for API authentication (required)
+- `--environment`, `-e`: API environment to use (default: "local")
+  - Choices: gold, dev-high, dev-low, uat, plat, stage, local
+- `--debug`: Enable debug mode to print the request payload (optional)
+- `--verify/--no-verify`: Verify SSL certificates (default: True)
+- `--timeout`: Timeout in seconds for waiting for completion (default: 300)
+
+#### Output
+
+The command displays a combined table with the following columns:
+- Command: Which command the test belongs to (generate-recommendation or genedit)
+- Test Case Name: Name of the test case
+- Test Type: Type of test
+- Payload File: Associated payload file
+- Environment: Status indicator (✓ for success, ✗ for failure)
+- Message: Ending message from the execution (if any)
+
+The command also provides a summary showing total tests run, successful tests, and failed tests.
+
+#### Example
+
+```bash
+# Run all configured test cases for both commands
+poetry run python cli.py verify-all --token $GOLD_TOKEN --environment local 
+
+# Run with debug output
+poetry run python cli.py verify-all --token $GOLD_TOKEN --environment local --debug
+
+# Run with custom timeout and no SSL verification
+poetry run python cli.py verify-all --token $GOLD_TOKEN --environment perf --timeout 600 --no-verify
+```
+
+#### When to Use
+
+Use `verify-all` when you want to:
+- Run a comprehensive verification of both generate-recommendation and genedit functionality
+- Ensure both systems are working correctly before deployments
+- Get a single command to verify all executor functionality
+- Run all configured test cases automatically without specifying individual tests
+
+## Troubleshooting
+
+*   **Authentication Errors:** Ensure your token is valid and has the necessary permissions.
+*   **File Not Found:** Double-check paths to routine files, policy files, templates, etc.
+*   **API Errors:** Check the console output for specific error messages from the API. The `--environment` option should point to the correct API deployment.
+*   **Missing Dependencies:** Make sure all required libraries are installed.
+*   **SSL Verification Errors (Highside Only):** Make sure you have [this root.pem file](https://eai-kubeflow.gld-dig-anlinsig.awsdns.internal.das/notebook/icddistyl-gbd/baseline-evals-20241202/?folder=/home/jovyan) saved in your home directory, then add the following two lines to the top of your `~/.zshrc` file:
+
+    ```bash
+    export REQUESTS_CA_BUNDLE=/Users/{AMxxxx}/root.pem
+    export SSL_CERT_FILE=/Users/{AMxxxx}/root.pem
+    ```
+
+    where /path/to/root.pem is the **absolute path** to the root.pem file.
+
+## Programmatic Dev Tools
+
+The `cli_distillery.dev_tools` sub-package provides lightweight helpers for
+integration testing and document retrieval that are **not** exposed on the
+command-line.
+
+currently, `cli_distillery.dev_tools` allow you to pull information from Eagle, e.g. : 
+- Download OCR documents  
+- Download medical file records
+
+If you create any other helpful tools for early R&D work highside, feel free to add them!
+
+### Fetch Generate-Recommendation requests from a Test-Suite
+
+```python
+from cli_distillery.dev_tools import (
+    get_generate_recommendation_requests,
+    refs_from_generate_request,
+    get_ocr_json,
+    get_medical_record,
+)
+
+# ‑- env vars or hard-coded strings work – same as the CLI helpers
+TOKEN = "<GOLD_TOKEN>"
+
+# Pull all stored requests for suite 12345 (defaults to the dev-high env)
+requests = get_generate_recommendation_requests(
+    "12345",
+    token=TOKEN,
+    environment="dev-high",
+)
+
+# Convert the first request into document references understood by ELV
+refs = refs_from_generate_request(requests[0])
+
+# Download OCR for the first document
+ocr_json = get_ocr_json(refs[0])
+
+# Download the original file as bytes + extension
+doc_bytes, ext = get_medical_record(refs[0])
+
+with open(f"document_1.{ext}", "wb") as fh:
+    fh.write(doc_bytes)
+```
+
+All network parameters (base URLs and bearer tokens) can be configured via the
+same environment variables used elsewhere in the Eagle project.
+
+For the Elevance APIs serving medical documentation, we expect the following:
+* `GET_OCR_BASE_URL`, `GET_OCR_BEARER_TOKEN`
+* `GET_MR_BASE_URL`, `GET_MR_BEARER_TOKEN`
+
+You can find these in 1password under Eagle.
+
+If those variables are present they will be used automatically; otherwise you
+may pass explicit keyword arguments to the helper functions.
