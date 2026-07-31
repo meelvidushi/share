@@ -1,0 +1,843 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Highside AWS CLI + K9s Setup (UMAI &amp; CPAS)</title><meta name="data-notion-page-icon" content="🛠️"/><link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%F0%9F%9B%A0%EF%B8%8F%3C%2Ftext%3E%3C%2Fsvg%3E"/><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+/* For default-background callouts, render the border outline. */
+.callout.block-color-default_background {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+figure,
+aside,
+details {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+
+	table.collection-content {
+		width: 100%;
+		table-layout: fixed;
+	}
+
+	table.collection-content th,
+	table.collection-content td {
+		overflow-wrap: anywhere;
+	}
+
+	table.collection-content td > .user,
+	table.collection-content td > time {
+		white-space: pre-wrap;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content-wrapper {
+	overflow-x: auto;
+}
+
+@media only print {
+	.collection-content-wrapper {
+		overflow-x: visible;
+	}
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	gap: 46px;
+}
+
+.column {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.column > *:first-child {
+	margin-top: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding-inline: 0.125rem;
+	padding-block: 0.375rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+table {
+	border-collapse: collapse;
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol.numbered-list.numbered-list-digits-2 {
+	padding-inline-start: 2em;
+}
+
+ol.numbered-list.numbered-list-digits-3plus {
+	padding-inline-start: 2.4em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+/*
+ * Render emoji icons using a ::before pseudo-element to keep the glyph
+ * out of the DOM textContent traversal. This avoids double-rendering icons
+ * in callouts and page titles.
+ * NOTE(slim/html-export-pseudo-icons): I can't tagref this because it will
+ * flag as a duplicate tag after codegen.
+ */
+.icon[data-emoji]::before {
+	content: attr(data-emoji);
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	margin-right: 0.4em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.tab {
+	margin: 1.25em 0;
+	padding-inline: 1rem;
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style><style>@import url('https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex-swap.min.css')</style></head><body><article id="3ae2c038-ca37-8130-963e-d1e4d33c82f2" class="page sans" data-notion-page-icon="🛠️"><header><div class="page-header-icon undefined"><span class="icon" data-emoji="🛠️"></span></div><h1 class="page-title" dir="auto">Highside AWS CLI + K9s Setup (UMAI &amp; CPAS)</h1><p class="page-description" dir="auto"></p><table class="properties"><tbody></tbody></table></header><div class="page-body"><p id="310661f7-a16f-42a8-a076-7245931cac74" class="" dir="auto"><strong>BLUF:</strong> This is the consolidated, Eagle-specific guide for getting AWS CLI + K9s/kubectl access working on your highside laptop. It replaces or acts as a renewed point of reference for the floating &quot;AWS-CLI-set-up-documentation&quot; file (Word/PDF passed around via Teams/email) —  this page is now the source of truth referenced from the Hub and from <a href="https://app.notion.com/p/Eagle-K9s-Cheat-Sheet-31a2c038ca3780939094fa90bb5a2314?pvs=21" data-notion-page-id="31a2c038-ca37-8093-9094-fa90bb5a2314" data-notion-space-id="56486d48-de86-417a-ae69-1b2a5c1515db"><img class="icon notion-static-icon" src="https://app.notion.com/icons/document_gray.svg"/>Eagle K9s Cheat Sheet</a>.</p><p id="3ae2c038-ca37-808b-b487-fb33e89f4056" class="" dir="auto">This doc combines the references from AWS-CLI-set-up-documentation and the highside confluence doc. If you need to reference the original copies, you can find them here:</p><figure id="3ae2c038-ca37-80df-be14-dae139059208" dir="ltr"><div class="source"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/AWS-CLI-set-up-documention_(1).pdf" data-notion-file="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/AWS-CLI-set-up-documention_(1).pdf" data-notion-file-alias="AWS-CLI-set-up-documention (1).pdf">AWS-CLI-set-up-documention (1).pdf</a></div></figure><figure id="3ae2c038-ca37-807e-8121-c84ecf97175e" dir="ltr"><div class="source"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/How_to_setup_AWS_CLI_on_MacOS_confluence_doc.pdf" data-notion-file="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/How_to_setup_AWS_CLI_on_MacOS_confluence_doc.pdf" data-notion-file-alias="How to setup AWS CLI on MacOS_confluence doc.pdf">How to setup AWS CLI on MacOS_confluence doc.pdf</a></div></figure><h3 id="63d4637a-89d3-4a56-ac80-909636d4bc2b" class="" dir="auto">Prerequisites</h3><ul id="92e75c00-8b4f-4ffe-9092-ced5e758243e" class="bulleted-list" dir="auto"><li style="list-style-type:disc">Highside laptop with Heightened Account (HA) already created (see <strong>Requesting Access</strong> section below if you don&#x27;t have one yet)</li></ul><ul id="3ae2c038-ca37-8023-9da1-dc269dd313f5" class="bulleted-list" dir="auto"><li style="list-style-type:disc">Cluster access (heightened devrole pt 2 <a href="https://distylai.slack.com/archives/C09B778L9H6/p1784671684852419">following this</a>) — you should have this automatically. </li></ul><ul id="558a8ebf-7dce-4e2d-8ea5-077988958ee1" class="bulleted-list" dir="auto"><li style="list-style-type:disc">For CLI-distillery / conda / Horizon proxy setup, that&#x27;s a separate flow — see <a href="https://app.notion.com/p/Get-your-Eagle-Development-Setup-Ready-Highside-1dc2c038ca3780e99bd4fc168ec890bc?pvs=21" data-notion-page-id="1dc2c038-ca37-80e9-9bd4-fc168ec890bc" data-notion-space-id="56486d48-de86-417a-ae69-1b2a5c1515db"><span class="icon" data-emoji="⚙️"></span>Get your Eagle Development Setup Ready Highside</a> instead. This page is only about AWS CLI + K9s/kubectl cluster access.</li></ul><ul id="3ae2c038-ca37-802e-8c5b-e1eff2592578" class="bulleted-list" dir="auto"><li style="list-style-type:disc">It would help to have your opencode setup already for troubleshooting!</li></ul><aside class="block-color-blue_background callout" data-notion-callout="" data-notion-callout-icon="💡" data-notion-callout-background="blue_background" style="white-space:pre-wrap;display:flex" id="b1dd42e0-9859-4243-bdc9-9b60d2598661" dir="ltr"><div style="font-size:1.5em"><span class="icon" data-emoji="💡"></span></div><div style="width:100%"><p id="96baecde-a517-48cd-bb49-fc18ac42740d" class="" dir="auto">The base AWS CLI install steps below are adapted from Elevance&#x27;s generic Confluence page (&quot;How to setup AWS CLI on MacOS&quot;, owned by their platform team, used by many app teams beyond just Eagle). That page&#x27;s own step numbering has a known bug (two different steps are both labeled &quot;12&quot;), and a previous version of this guide referenced it by step number (&quot;skip steps 10-11&quot;) — that reference no longer matches and has been dropped here. <strong>Don&#x27;t cross-reference Confluence by step number</strong> — its numbering can and does drift. If you need to go to Confluence directly, look for the heading text, not a step number.</p></div></aside><hr id="879a3d33-f879-47a5-baa0-e09f824bd9fd" dir="auto"/><h1 id="ebf7f7ae-1c2c-4687-ab3c-1774a17c8d0e" class="" dir="auto">Part 1: AWS CLI Setup</h1><h2 id="6a0a5c52-9380-4545-9acb-727e54ec59ff" class="" dir="auto">1. Install Homebrew</h2><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" integrity="sha512-whYhDwtTmlC/NpZlCr6PSsAaLOrfjVg/iXAnC4H/dtiHawpShhT2SlIMbpIhT/IL/NrpdMm+Hq2C13+VKpHTYw==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><pre id="02a12b90-1b8e-4ada-a6a4-75f863e97f7d" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;</code></pre><h2 id="65205496-4ebc-448c-8a17-9715166e5ddb" class="" dir="auto">2. Install Python 3.9</h2><aside class="block-color-yellow_background callout" data-notion-callout="" data-notion-callout-icon="⚠️" data-notion-callout-background="yellow_background" style="white-space:pre-wrap;display:flex" id="4bf1ca60-f0cc-4b91-a2db-7fbb8473846c" dir="ltr"><div style="font-size:1.5em"><span class="icon" data-emoji="⚠️"></span></div><div style="width:100%"><p id="96bb4819-b281-4eda-84e1-7651f5865f1f" class="" dir="auto"><strong>Pin Python 3.9 specifically</strong> — the generic Confluence doc just says &quot;install python3&quot; with no version pin, but the Eagle virtual environment setup expects 3.9 and things may not work as expected on other versions.</p></div></aside><pre id="a2b892cf-df2f-44e0-9036-5d6ebacc2b45" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">brew install python@3.9</code></pre><h2 id="c7bdee86-9236-4157-9124-5c6e32c6c4e4" class="" dir="auto">3. Create highside aws_cert folder</h2><p id="2328b0cc-5a54-48ef-ad2a-3f1d9ef1fc66" class="" dir="auto">Go to <a href="https://mysite.wellpoint.com/shared?id=%2Fpersonal%2Fam64827%5Fad%5Fwellpoint%5Fcom%2FDocuments%2Fdistyl%2Deng&amp;listurl=%2Fpersonal%2Fam64827%5Fad%5Fwellpoint%5Fcom%2FDocuments">this link</a> highside (wellpoint folder) and download the Aws_Cert folder which will include: </p><ul id="98fa5ec4-8537-4305-abcb-3be5d0d9200f" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><code>samlapi.py</code></li></ul><ul id="47917fa5-1a18-4933-93c7-bc3fc735a4a8" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><code>root.pem</code> — the copy from  <a href="https://app.notion.com/p/Get-your-Eagle-Development-Setup-Ready-Highside-1dc2c038ca3780e99bd4fc168ec890bc?pvs=21" data-notion-page-id="1dc2c038-ca37-80e9-9bd4-fc168ec890bc" data-notion-space-id="56486d48-de86-417a-ae69-1b2a5c1515db"><span class="icon" data-emoji="⚙️"></span>Get your Eagle Development Setup Ready Highside</a> is not the one you need for this folder, you need the one from wellpoint folder. </li></ul><ul id="ed780f4d-c209-4106-85f4-543c675e92b0" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><code>updateCerts.sh</code></li></ul><h2 id="fa3e6fc9-d6f9-420d-889f-d4e7ef5ce620" class="" dir="auto">4. Create and activate a virtual environment</h2><pre id="71c6e342-729a-4c59-a61c-d289b3d2b18b" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">cd ~/aws_cert
+pip install --user virtualenv --cert root.pem
+/Users/{AMxxxx}/Library/Python/2.7/bin/virtualenv -p python3.9 sandbox
+cp samlapi.py root.pem updateCerts.sh sandbox/
+cd sandbox
+source bin/activate</code></pre><h2 id="af57dd15-d44e-45d7-afa6-93eed66b427c" class="" dir="auto">5. Install AWS CLI</h2><pre id="dd67b6c5-8832-48d8-8971-5d39178f3523" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">pip install --upgrade awscli --cert root.pem
+aws --version</code></pre><h2 id="a939064b-7bbc-47fd-a18c-f249e3037f78" class="" dir="auto">6. Configure AWS CLI</h2><p id="5eff0e06-63c0-4937-90ca-8fcad021f32a" class="" dir="auto">Run <code>aws configure</code> once to create <code>~/.aws/config</code>, then edit that file with <code>nano ~/.aws/config</code> directly to add the Distyl-specific profile blocks below <strong>exactly as written</strong> (except your own username):</p><pre id="8dd2cbc7-996d-4dca-aa9c-486d2a15b872" class="code code-wrap"><code style="white-space:pre-wrap;word-break:break-all">[profile elv-distyl-gold]
+aws_secret_access_key = default
+aws_access_key_id = default
+region = us-east-1
+output = json
+role_arn = arn:aws:iam::307946675711:role/gld-apm1080697-devrole
+source_profile = elv-distyl-gold
+
+[profile crln-distyl-gold]
+aws_secret_access_key = default
+aws_access_key_id = default
+region = us-east-1
+output = json
+role_arn = arn:aws:iam::307946675711:role/gld-apm1082082-devrole
+source_profile = crln-distyl-gold</code></pre><h2 id="6d514d9d-bc24-42a6-a8a2-6de68d534e3e" class="" dir="auto">7. Install Python dependencies</h2><pre id="3f971a51-9f4e-4a77-8bc4-07e2960bb42e" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">pip3 install boto boto3 requests configparser bs4 --cert root.pem</code></pre><h2 id="9e36b152-f2bc-4ff1-962a-df17634f0096" class="" dir="auto">8. Run updateCerts.sh</h2><pre id="1f028a10-18cd-460c-aaca-326aa2c712d1" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">chmod +x updateCerts.sh
+./updateCerts.sh</code></pre><p id="040a2bb9-431b-4cce-b81c-c2ef34679fd4" class="" dir="auto">This appends <code>root.pem</code> to the various <code>cacert</code> bundles inside your virtual environment&#x27;s installed packages.</p><h2 id="75a85086-0cff-4e99-a22f-3d23b8f75620" class="" dir="auto">9. Get your HA username + 10-hour password</h2><ol type="1" id="47931965-755a-46d2-823a-3f8f4a08ba71" class="numbered-list" start="1" dir="auto"><li>Log into <a href="https://cyberark.internal.das/PasswordVault/logon.aspx">CyberArk</a> (have to use this link highside) — username is your AM… and follow okta login. </li></ol><ol type="1" id="3ae2c038-ca37-801b-8901-cf7184f0f1ce" class="numbered-list" start="2" dir="auto"><li>Store the temporary password &amp; account name in macOS Keychain for the script to access:<p id="3ae2c038-ca37-806f-9874-d1a1f1c54641" class="" dir="auto">Keychain Access → File → New Password Item → name it <code>USHA</code>, account = your HA account, password = today&#x27;s temporary password. See image: </p><figure id="3ae2c038-ca37-804d-9a7b-d3f0a55c77bb" class="image" data-notion-image="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.39.08_PM.png" dir="ltr"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.39.08_PM.png"><img style="width:2486px" src="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.39.08_PM.png"/></a></figure><figure id="3ae2c038-ca37-8083-afcc-cea113b24462" class="image" data-notion-image="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.38.10_PM.png" dir="ltr"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.38.10_PM.png"><img style="width:626.984375px" src="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.38.10_PM.png"/></a></figure><figure id="3ae2c038-ca37-8001-af3d-f20b18a3f9a9" class="image" data-notion-image="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.38.19_PM.png" dir="ltr"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.38.19_PM.png"><img style="width:626.9921875px" src="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.38.19_PM.png"/></a></figure></li></ol><p id="3ae2c038-ca37-8055-ae38-d336eb902940" class="" dir="auto">NOTE: Do not change any other thing in this command except for the username and password<br/>(see image above, username is starting from AN... and not AM. The password is<br/>something that you can copy once you click on the show button).</p><ol type="1" id="bfc0aab7-49be-4547-9eea-67782fb31c19" class="numbered-list" start="3" dir="auto"><li><strong>This password expires roughly every 10 hours</strong> — you&#x27;ll need to update the Keychain entry (and re-run <code>samlapi.py</code> below) each time it expires (every time you access k9s or aws).</li></ol><h2 id="64141aaf-e4af-4163-ad38-566ceab58101" class="" dir="auto">10. Run samlapi.py</h2><p id="3ae2c038-ca37-8055-874e-de4c904e24b2" class="" dir="auto">Make sure you are in virtual environment. </p><p id="3ae2c038-ca37-80b5-9cff-d881d519c573" class="" dir="auto">Go to you virtual env folder and then activate the virtual env. </p><ul id="3ae2c038-ca37-801e-ade1-d80733ecc3b1" class="bulleted-list" dir="auto"><li style="list-style-type:disc">source bin/activate</li></ul><p id="66f9ab56-07a8-4ddb-ba7c-5301b910b8ae" class="" dir="auto">For <strong>UMAI UAT</strong>:</p><pre id="85df3da5-ff47-436e-94f9-8ba347bc19e1" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">python3 samlapi.py &#x27;ANXXXXXAD@us.ad.wellpoint.com&#x27; &quot;$(security find-generic-password -a USERNAME -s USHA -w)&quot; arn:aws:iam::738234568511:role/gld-apm1080697-devrole elv-distyl-gold us-east-1</code></pre><figure id="3ae2c038-ca37-8071-9c9c-ce03845db1fb" class="image" data-notion-image="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.48.25_PM.png" dir="ltr"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.48.25_PM.png"><img style="width:664.9921875px" src="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_10.48.25_PM.png"/></a></figure><p id="24661c21-ef13-48ea-8297-37dc82423c93" class="" dir="auto">For <strong>CPAS UAT</strong>:</p><pre id="e967f47a-fa1f-492a-bd38-d7b4638adedd" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">python3 samlapi.py &#x27;ANXXXXXAD@us.ad.wellpoint.com&#x27; &quot;$(security find-generic-password -a USERNAME -s USHA -w)&quot; arn:aws:iam::738234568511:role/gld-apm1082082-devrole crln-distyl-gold us-east-1</code></pre><aside class="block-color-red_background callout" data-notion-callout="" data-notion-callout-icon="⚠️" data-notion-callout-background="red_background" style="white-space:pre-wrap;display:flex" id="708d1355-6612-4d6a-bc6f-90ffb59bdec7" dir="ltr"><div style="font-size:1.5em"><span class="icon" data-emoji="⚠️"></span></div><div style="width:100%"><p id="eb0122fd-8710-4b10-a21d-c9879ce6c1c2" class="" dir="auto">Note this uses account <code>738234568511</code>, while the Confluence docs sometimes use <code>307946675711</code> for the same role name. Use the one starting with 732…</p></div></aside><p id="3ae2c038-ca37-803a-9e15-c44cacfa0f66" class="" dir="auto">NOTE</p><ul id="3ae2c038-ca37-804f-8ed1-c8ceeef6bc89" class="bulleted-list" dir="auto"><li style="list-style-type:disc">Replace the username and password with yours that you would obtain from the<br/>CyberArk website.</li></ul><ul id="3ae2c038-ca37-8010-b367-fb6c5ae7ffb3" class="bulleted-list" dir="auto"><li style="list-style-type:disc">If you get SSL related errors, do: <code>export AWS_CA_BUNDLE=&quot;path to your root.pem file”</code></li></ul><ul id="3ae2c038-ca37-8099-944a-c9203c87500d" class="bulleted-list" dir="auto"><li style="list-style-type:disc">The Password changes every 10hrs or so, so one would have to run the command<br/>every time to get access to the cluster</li></ul><h3 id="3ae2c038-ca37-80f0-b890-f4977773a78f" class="" dir="auto">Add login types</h3><p id="fc94d51f-bbaa-445a-ba15-4358f105b43e" class="" dir="auto">Add <code>login-uat</code>/<code>login-cpas</code> shell functions that read the password from Keychain automatically instead of typing the command above each time. </p><p id="3ae2c038-ca37-804f-8402-d596010270ae" class="" dir="auto">Do <code>nano ~/.zshrc</code> </p><p id="3ae2c038-ca37-80cd-8d55-d06e99d1d602" class="" dir="auto">Then add this to it: </p><pre id="5cf869bd-f157-4952-972b-0c7e795fc71f" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">login-uat() {
+	local username=&#x27;ANXXXXAD&#x27;
+	local user=&#x27;ANXXXXAD@us.ad.wellpoint.com&#x27;
+	local role_arn=&#x27;arn:aws:iam::738234568511:role/gld-apm108097-devrole&#x27;
+	local app=&#x27;elv-distyl-gold&#x27;
+	local region=&#x27;us-east-1&#x27;
+	
+	local pass=&quot;${1:-}&quot;
+	if [[ -z &quot;$pass&quot; ]]; then
+		if ! pass=$(security find-generic-password -a &quot;$username&quot; -s USHA -w 2&gt;/dev/null); then
+			echo &quot;Keychain entry not found for $user (service USHA)&quot; &gt;&amp;2
+			return 1
+		fi
+	fi
+
+	python3 samlapi.py &quot;$user&quot; &quot;$pass&quot; &quot;$role_arn&quot; &quot;$app&quot; &quot;$region&quot;
+}
+
+login-cpas() {
+	local username=&#x27;AN849445AD&#x27;
+	local user=&#x27;AN849445AD@us.ad.wellpoint.com&#x27;
+	local role_arn=&#x27;arn:aws:iam::738234568511:role/gld-apm1082082-devrole&#x27;
+	local app=&#x27;crln-distyl-gold&#x27;
+	local region=&#x27;us-east-1&#x27;
+	local pass
+
+	if ! pass=$(security find-generic-password -a &quot;$username&quot; -s USHA -w 2&gt;/dev/null); then
+		echo &quot;Keychain entry not found for $user (service USHA)&quot; &gt;&amp;2
+		return 1
+	fi
+
+	python3.9 samlapi.py &quot;$user&quot; &quot;$pass&quot; &quot;$role_arn&quot; &quot;$app&quot; &quot;$region&quot;
+}</code></pre><p id="3ae2c038-ca37-8087-99af-d49d9bf4aa6c" class="" dir="auto">Restart your terminal and then in bash you can use commands like “login-cpas” and “login-umai” to get the relevant tokens. Prerequisite is to replace your USERNAME and add USHA to keychain setup.</p><h2 id="6eba3bb7-d7e7-47e2-82e4-6fe30ccb5bfb" class="" dir="auto">11. Verify AWS CLI access</h2><pre id="7d68635e-4a46-48f2-b081-750e72326280" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">aws s3 ls --profile elv-distyl-gold</code></pre><hr id="51c1f51d-805d-4879-a0ab-eff6269d971b" dir="auto"/><h1 id="e62be07b-840d-49ab-aee4-c6b0fe2f4e19" class="" dir="auto">Part 2: K9s / kubectl Setup</h1><h2 id="dd300130-b01a-43bc-83d5-ff26ce11221d" class="" dir="auto">Install kubectl and k9s</h2><pre id="031b19a0-4545-4077-b4bf-af9c4ac3ae88" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">brew install kubectl k9s</code></pre><h2 id="7900987e-d910-4c89-96f1-8d253dc8036b" class="" dir="auto">Set up kubeconfig</h2><p id="cce727ee-b2cb-4c2c-acd3-718a5fb8a97c" class="" dir="auto">Download the relevant kubeconfig files from <a href="https://mysite.wellpoint.com/shared?id=%2Fpersonal%2Fam64827%5Fad%5Fwellpoint%5Fcom%2FDocuments%2Fdistyl%2Deng%2Fkubeconfig&amp;listurl=%2Fpersonal%2Fam64827%5Fad%5Fwellpoint%5Fcom%2FDocuments&amp;viewid=23d7d281%2Db0c7%2D4b3b%2D9a0e%2D34301c0c0ecd">here</a> (accessible highside) and point <code>KUBECONFIG</code> at it:</p><table id="0946b512-e906-46ca-9203-2ecdba7e176f" class="simple-table" dir="ltr"><thead class="simple-table-header"><tr id="2406347e-f6d0-4442-b4ec-c430ef5f59bf" dir="ltr"><th id="Cldo" class="simple-table-header-color simple-table-header">Cluster</th><th id="GQtI" class="simple-table-header-color simple-table-header">Kubeconfig</th></tr></thead><tbody><tr id="e0485e00-92d5-4b69-8f06-cefe1fc66b88" dir="ltr"><td id="Cldo" class="">UMAI UAT</td><td id="GQtI" class=""><code>distyl_gold_config.yaml</code></td></tr><tr id="809e25de-f5cb-4126-8d1d-f9f7b21f444d" dir="ltr"><td id="Cldo" class="">CPAS UAT</td><td id="GQtI" class=""><code>carelon-distyl-non-prod.yaml</code></td></tr><tr id="9970ae66-c941-4944-a892-225577d6a5b6" dir="ltr"><td id="Cldo" class="">UMAI Platinum (read-only)</td><td id="GQtI" class=""><code>platinum-read-config.yaml</code></td></tr><tr id="7c9c34b2-16a8-4f2c-ad5e-e7888930ff84" dir="ltr"><td id="Cldo" class="">CPAS Platinum (read-only)</td><td id="GQtI" class=""><code>cpas-platinum-read-config.yaml</code></td></tr></tbody></table><p id="3ae2c038-ca37-80ae-971e-f4bbd9255063" class="" dir="auto">Try one and then the rest. </p><p id="3ae2c038-ca37-8031-8464-c9b51f474f63" class="" dir="auto">For instance, </p><p id="3ae2c038-ca37-8043-87af-e303090eb24a" class="" dir="auto">Get link to the file for UMAI UAT: distyl_gold_config from the <a href="https://mysite.wellpoint.com/shared?id=%2Fpersonal%2Fam64827%5Fad%5Fwellpoint%5Fcom%2FDocuments%2Fdistyl%2Deng%2Fkubeconfig&amp;listurl=%2Fpersonal%2Fam64827%5Fad%5Fwellpoint%5Fcom%2FDocuments&amp;viewid=23d7d281%2Db0c7%2D4b3b%2D9a0e%2D34301c0c0ecd">link</a> above. </p><p id="3ae2c038-ca37-80fb-9f84-cdf23e7a0097" class="" dir="auto">Update the <em><strong>KUBECONFIG</strong></em> to point to this kube configuration when accessing UMAI UAT.</p><p id="3ae2c038-ca37-8001-9cae-d375dfab59f2" class="" dir="auto"><em><code><strong>export KUBECONFIG=&#x27;path_to_virtual /distyl_gold_config.yaml’</strong></code></em><em><strong> </strong></em></p><p id="3ae2c038-ca37-8099-8484-d9352e862dbe" class="" dir="auto">This is the generic command for all of them:</p><p id="3ae2c038-ca37-8070-8a3c-cf9d4b5e74aa" class="" dir="auto"><code>export KUBECONFIG=&#x27;path_to_virtual_env/CONFIG_NAME.yaml&#x27;</code> </p><p id="3ae2c038-ca37-801b-8fc5-f0c1ab0bcaf0" class="" dir="auto">Once you’ve done that for one of them, try this: </p><pre id="e41e77aa-e3f5-48d0-a768-51c1d584f4c7" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">aws eks update-kubeconfig --name distyl-gold --region us-east-1 --profile elv-distyl-gold
+kubectl get pods -n umsvc-perf-gold</code></pre><p id="366020ea-c030-43d1-9cfb-626127403aa9" class="" dir="auto">Once this works, run <code>k9s</code> and see <a href="https://app.notion.com/p/Eagle-K9s-Cheat-Sheet-31a2c038ca3780939094fa90bb5a2314?pvs=21" data-notion-page-id="31a2c038-ca37-8093-9094-fa90bb5a2314" data-notion-space-id="56486d48-de86-417a-ae69-1b2a5c1515db"><img class="icon notion-static-icon" src="https://app.notion.com/icons/document_gray.svg"/>Eagle K9s Cheat Sheet</a> for namespace/pod navigation and shortcuts. You can also configure it for the rest of the clusters now. </p><p id="3ae2c038-ca37-80b3-9e96-eb217a7b5aae" class="" dir="auto"><br/>PRO TIP:</p><p id="3ae2c038-ca37-8052-afa7-cea0885fd9d2" class="" dir="auto"><strong>You can use a shell script to perform the same steps.</strong></p><pre id="0ae5fac3-627b-4cea-bde5-4baf6f8dd753" class="code code-wrap" data-notion-code-syntax="bash"><code class="language-bash" style="white-space:pre-wrap;word-break:break-all">#!/bin/bash
+read -sp &quot;Enter password: &quot; PASSWORD
+echo
+
+cd ~/awscerts
+sleep 2
+ls
+
+cd distyl-sandbox
+sleep 2
+ls
+
+source bin/activate
+sleep 2
+
+python3.12 ~/awscerts/distyl-sandbox/samlapi.py &#x27;AN814955AD@us.ad.wellpoint.com&#x27; &quot;$PASSWORD&quot; arn:aws:iam::738234568511:role/gld-apm1080697-devrole elv-distyl-gold us-east-1
+sleep 2
+
+aws eks update-kubeconfig --name distyl-gold --region us-east-1 --profile elv-distyl-gold
+sleep 2
+
+kubectl get namespaces</code></pre><h3 id="3ae2c038-ca37-8006-ade5-f79ae4bbc22a" class="" dir="auto">PLAT Environments: </h3><p id="3ae2c038-ca37-804e-ac33-c047318a65fe" class="" dir="auto">To access Platinum, download the following kubeconfig files from the kubeconfig highside folder:</p><ul id="3ae2c038-ca37-80e6-88c7-eafe78339478" class="bulleted-list" dir="auto"><li style="list-style-type:disc">UMAI Kubeconfig: <code>platinum-read-config.yaml</code></li></ul><ul id="3ae2c038-ca37-8049-be0d-d82360382081" class="bulleted-list" dir="auto"><li style="list-style-type:disc">CPAS Kubeconfig: <code>cpas-platinum-read-config.yaml</code> </li></ul><p id="3ae2c038-ca37-8000-bd95-dd987a06148a" class="" dir="auto">Update the KUBECONFIG path to point to relevant file and then go ahead with the normal<br/>kubectl/k9s command.<br/>NOTE: To access the Distyl Platinum one does not need Heighted Account or the AWS CLI<br/>or go through the above steps that are mentioned above in the docx. There are only three<br/>steps to access the platinum which are as follows:</p><ol type="1" id="3ae2c038-ca37-8048-b0a7-f734968ffafc" class="numbered-list" start="1" dir="auto"><li>Download the kubeconfig</li></ol><ol type="1" id="3ae2c038-ca37-8041-8206-d1999c146b6b" class="numbered-list" start="2" dir="auto"><li>Update the export path for kubeconfig</li></ol><ol type="1" id="3ae2c038-ca37-80b2-aa54-c1900561e860" class="numbered-list" start="3" dir="auto"><li>Use kubectl/k9</li></ol><h1 id="f32b7666-7ce4-42df-bbff-e6e8622477b2" class="" dir="auto">Requesting Access (tickets)</h1><h3 id="5c2758b4-f4ec-461b-90d0-c33c2e209b82" class="" dir="auto">Heightened Account (HA) creation</h3><p id="4a5c302e-909e-4457-847e-0650613bdd84" class="" dir="auto">Sample ticket: <code>RITM25418959</code> via <a href="https://elevancehealth.service-now.com/ess?id=sc_cat_item&amp;table=sc_cat_item&amp;sys_id=112c85d4dbfacf40eed27bedae9619f8&amp;searchTerm=ha%20account%20creation">Elevance SNOW</a> — Request Type: New Access, Environment: Production, Access Type: General User Access.</p><p id="3ae2c038-ca37-804e-a25d-dc3d745c191d" class="" dir="auto">USAD: </p><figure id="3ae2c038-ca37-80fd-b63a-fee1b62ce8e3" class="image" data-notion-image="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.28_PM.png" dir="ltr"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.28_PM.png"><img style="width:664.9765625px" src="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.28_PM.png"/></a></figure><p id="3ae2c038-ca37-8053-9dfb-cdc95a7833dc" class="" dir="auto">DEVAD: </p><figure id="3ae2c038-ca37-800e-95f1-f18841282b4b" class="image" data-notion-image="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.41_PM.png" dir="ltr"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.41_PM.png"><img style="width:664.9921875px" src="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.41_PM.png"/></a></figure><h3 id="175e58db-f00d-4f3d-a36f-2e791051e275" class="" dir="auto">BitBucket access</h3><p id="c6536e84-72f5-41b2-872a-24e78737d091" class="" dir="auto">Sample ticket: <code>RITM25471043</code> via <a href="https://elevancehealth.service-now.com/ess?id=sc_cat_item&amp;table=sc_cat_item&amp;sys_id=7949ae87db32c300eed27bedae9619ff&amp;searchTerm=Enterprise%20BitBucket%20Service">Elevance SNOW</a> — Access Type: New Access, Environment: Production, Access Type: General User Access.</p><figure id="3ae2c038-ca37-80f8-9dfb-f4f729334ce4" class="image" data-notion-image="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.06_PM.png" dir="ltr"><a href="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.06_PM.png"><img style="width:664.9921875px" src="Highside%20AWS%20CLI%20+%20K9s%20Setup%20(UMAI%20&amp;%20CPAS)/Screenshot_2026-07-30_at_11.12.06_PM.png"/></a></figure><h3 id="74c589ef-3055-440e-805d-2edbcac9a800" class="" dir="auto">K8s cluster AD group access</h3><p id="474c98ac-211f-446f-9690-eb176c0892f6" class="" dir="auto">Heightened accounts alone only cover k9s access — you also need to be added to AD groups on the cluster. Request via the &quot;Network Active Directory Group User Access&quot; ticket in <a href="https://elevancehealth.service-now.com/ess?id=ant_sc_cat_item&amp;sys_id=253ea30c976bd5509ef17ed3f153af82">Elevance SNOW</a> if you don’t automatically have access:</p><ul id="fc03511a-afab-46b4-9ec7-a98e840c297b" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><code>CAW-738234568511-gld-apm1080697-devrole</code> — write access to dev/perf/uat</li></ul><ul id="1d8790d3-62c0-4df8-afc0-b3fe4577c945" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><code>CAW-738234568511-plat-apm1080697-devrole-readonly</code> — read-only access to plat</li></ul><h1 id="3ae2c038-ca37-80a1-b09e-cc6fbf60d223" class="" dir="auto">ArgoCD Links</h1><p id="3ae2c038-ca37-8072-9f44-fc2cf111d5f7" class="" dir="auto">ALL ARGOCD Links are in 1password under Eagle group. </p><h1 id="3ae2c038-ca37-801b-9882-e7c957d4f450" class="" dir="auto">Bitbucket Links</h1><ol type="1" id="3ae2c038-ca37-8012-855b-fbdc40e81cd1" class="numbered-list" start="1" dir="auto"><li>UMAI DEV/PERF/UAT</li></ol><p id="3ae2c038-ca37-80f0-9a36-dea86be9e011" class="" dir="auto">Bitbucket link: <a href="https://bitbucket.elevancehealth.com/projects/DISTYL/repos/distyl-gitops/browse/deployment/overlays?at=distyl">https://bitbucket.elevancehealth.com/projects/DISTYL/repos/distyl-gitops/browse/deployment/overlays?at=distyl</a></p><ol type="1" id="3ae2c038-ca37-80cf-a4f7-c16785483cf1" class="numbered-list" start="2" dir="auto"><li>CPAS DEV</li></ol><p id="3ae2c038-ca37-80f2-adfe-f8e7f5d89968" class="" dir="auto"><a href="https://bitbucket.elevancehealth.com/projects/DISTYL/repos/cpas-distyl-gitops/browse?at=cpas-distyl">https://bitbucket.elevancehealth.com/projects/DISTYL/repos/cpas-distyl-gitops/browse?at=cpas-distyl</a></p><ol type="1" id="3ae2c038-ca37-80d3-982c-e66033a5acd4" class="numbered-list" start="3" dir="auto"><li>CPAS UAT</li></ol><p id="3ae2c038-ca37-80fa-ae4e-ca71eb98bda0" class="" dir="auto"><a href="https://bitbucket.elevancehealth.com/projects/DISTYL/repos/cpas-distyl-gitops/browse?at=cpas-distyl">https://bitbucket.elevancehealth.com/projects/DISTYL/repos/cpas-distyl-gitops/browse?at=cpas-distyl</a></p><ol type="1" id="3ae2c038-ca37-809a-9671-d7d582099fbc" class="numbered-list" start="4" dir="auto"><li>CPAS PLAT</li></ol><p id="3ae2c038-ca37-8005-a84b-f2fbd0459718" class="" dir="auto"><a href="https://bitbucket.elevancehealth.com/projects/DISTYL/repos/cpas-distyl-gitops/browse?at=cpas-distyl">https://bitbucket.elevancehealth.com/projects/DISTYL/repos/cpas-distyl-gitops/browse?at=cpas-distyl</a></p><p id="3ae2c038-ca37-80cc-b7ff-e8a31b3a00b5" class="" dir="auto">
+</p><hr id="61bc89c7-69de-4c61-9aad-fc95963a3ba9" dir="auto"/><h1 id="0c66db64-a2db-4eab-ba64-e2de4549a4c4" class="" dir="auto">Troubleshooting</h1><p id="22e5ca73-9afb-45c0-afab-21a8821f8ece" class="" dir="auto"><strong>SSL errors</strong> (<code>SSLCertVerificationError</code>, self-signed certificate in certificate chain) — make sure you ran <code>updateCerts.sh</code> (step 8), or export <code>AWS_CA_BUNDLE=&quot;path to your root.pem&quot;</code> directly.</p><p id="7c3a045e-f7e0-45cb-9515-7fb96dfba406" class="" dir="auto"><code><strong>samlapi.py</strong></code><strong> fails with </strong><code><strong>IndexError: list index out of range</strong></code><strong> on </strong><code><strong>awsroles[0].split(&#x27;,&#x27;)[0]</strong></code> — this means your AWS roles list came back empty, i.e. you&#x27;re missing the K8s cluster AD group access (see <strong>Requesting Access</strong> above). Heightened account alone isn&#x27;t enough.</p><p id="b3899c74-4eaa-404d-b77d-21ca903c5a66" class="" dir="auto"><code><strong>AssumeRole AccessDenied</strong></code><strong> when running </strong><code><strong>aws eks update-kubeconfig</strong></code> — if you get an <code>AccessDenied</code> error on <code>sts:AssumeRole</code> (AWS CLI trying to assume a role via a stale/personal IAM session instead of the org role), re-run <code>samlapi.py</code> (step 10) and redo the setup from there — this resets which role gets assumed and usually clears the error. <a href="https://distylai.slack.com/archives/C09B778L9H6/p1785437804393969">Source</a></p><p id="71efa055-a41d-46e2-9300-463dec756e37" class="" dir="auto"><strong>10-hour password expired</strong> — CyberArk passwords expire roughly every 10 hours. Update the Keychain <code>USHA</code> entry with the new password and re-run <code>samlapi.py</code> (step 10).</p><hr id="15c84f96-c05f-4586-8327-89adf78fb2c6" dir="auto"/><h1 id="4f4482e1-3981-4545-833b-d667938211f6" class="" dir="auto">Related pages</h1><ul id="0988939a-4cef-4812-9ccb-9b9167a4c852" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><a href="https://app.notion.com/p/Eagle-K9s-Cheat-Sheet-31a2c038ca3780939094fa90bb5a2314?pvs=21" data-notion-page-id="31a2c038-ca37-8093-9094-fa90bb5a2314" data-notion-space-id="56486d48-de86-417a-ae69-1b2a5c1515db"><img class="icon notion-static-icon" src="https://app.notion.com/icons/document_gray.svg"/>Eagle K9s Cheat Sheet</a> — day-to-day k9s usage once this setup is done</li></ul><ul id="80913c0a-edf8-4e8f-8f9e-33df2be8ac14" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><a href="https://app.notion.com/p/Get-your-Eagle-Development-Setup-Ready-Highside-1dc2c038ca3780e99bd4fc168ec890bc?pvs=21" data-notion-page-id="1dc2c038-ca37-80e9-9bd4-fc168ec890bc" data-notion-space-id="56486d48-de86-417a-ae69-1b2a5c1515db"><span class="icon" data-emoji="⚙️"></span>Get your Eagle Development Setup Ready Highside</a> — separate cli-distillery / conda / Horizon proxy setup</li></ul><ul id="f58e7e35-4643-43a2-a9a2-1ddfaa9636a1" class="bulleted-list" dir="auto"><li style="list-style-type:disc"><a href="https://app.notion.com/p/Eagle-Tech-Instructions-Hub-3112c038ca378066b87bdccd1feaa72e?pvs=21" data-notion-page-id="3112c038-ca37-8066-b87b-dccd1feaa72e" data-notion-space-id="56486d48-de86-417a-ae69-1b2a5c1515db">Eagle Tech Instructions Hub</a> — Eagle Tech Instructions Hub</li></ul></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
