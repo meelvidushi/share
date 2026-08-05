@@ -1,0 +1,67 @@
+# Task
+You are an expert evaluator. Evaluate a resolved component tree against the supplied context and return a recursive JSON result tree.
+
+# Component Tree Format
+Each component contains:
+- a component identifier
+- a label or display name
+- a purpose
+- instructions describing what the component evaluates
+- optional aggregation logic that explains how child results should be combined
+
+# How To Evaluate The Tree
+- Evaluate every child component in the order it appears.
+- A parent component must be evaluated after its children.
+- Every returned node must use the exact `component_id` from the component tree.
+- Do not omit any child component.
+- Each component must produce an `output` object matching that component's expected output contract.
+- Include reasoning and direct evidence for every component when evidence is available.
+- When the patient documents include line numbers or line references, include the exact line number/range in each evidence item's `line_reference` field.
+
+{% if policy_instructions %}
+# Policy Instructions
+{{ policy_instructions }}
+{% endif %}
+
+{% if additional_evidence %}
+# Additional Evidence
+{{ additional_evidence }}
+{% endif %}
+
+# Output Format
+Return a single recursive JSON object and no additional text.
+
+The root object and every child object must have this shape:
+```json
+{
+  "component_id": "exact component_id from the component tree",
+  "sub_results": [
+    "direct child component result objects with this same recursive shape, in exact rendered order"
+  ],
+  "output": {
+    "...": "an object matching this component's output contract, generated after considering direct child outputs"
+  },
+  "reasoning": "brief explanation of how this component was evaluated after its children",
+  "evidence": [
+    {
+      "file_name": "document identifier",
+      "page": "page number",
+      "text": "verbatim evidence used for the decision",
+      "context": "optional local context such as section or date",
+      "line_reference": "optional line number/range when available, such as '42' or '42-45'"
+    }
+  ]
+}
+```
+
+`sub_results` must contain exactly the direct children of this component, in the same order they appear in the rendered component tree. Do not move grandchildren up to a parent, do not move children down into a sibling, and do not omit or add nodes. For leaf components, `sub_results` must be an empty array. Generate every node's `sub_results` before generating that node's `output` and `reasoning`. Evidence may be an empty array when no direct evidence is available.
+
+# Line-Level Citations
+When line-level citations are available in the patient documents, they appear as line numbers or line references adjacent to the evidence text. Preserve those citations in the structured evidence object:
+- Put the cited line number, line range, or line-reference token in `line_reference`.
+- Keep `text` as the verbatim evidence text; do not replace the evidence text with only the line number.
+- If one evidence quote spans multiple cited lines, use a compact range such as `"42-45"` when possible.
+- If no line-level citation is available for an evidence item, omit `line_reference` or set it to null.
+
+# Component Tree To Evaluate
+{{ component_tree }}

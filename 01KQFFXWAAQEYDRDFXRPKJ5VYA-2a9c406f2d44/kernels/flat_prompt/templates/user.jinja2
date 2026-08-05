@@ -1,0 +1,24 @@
+Please review the following materials and evaluate the component tree. Respond with only the recursive JSON object described in the system prompt.
+
+{% if tool_results %}
+# Tool Results
+{{ tool_results }}
+{% endif %}
+
+{% if parser_results %}
+# Parser Results
+{{ parser_results }}
+{% endif %}
+
+{% if previous_soap_notes %}
+# Previous SOAP Notes
+{{ previous_soap_notes }}
+{% endif %}
+
+{% if routine_inputs %}
+# Routine Inputs
+{{ routine_inputs }}
+{% endif %}
+
+# Patient Documents
+{{ combined_documents }}

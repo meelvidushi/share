@@ -1,0 +1,54 @@
+schema_version: 1
+sdk_version: ">=0.3.0,<0.4.0"
+kernels:
+  - kind: sequence
+    module: kernels.sequence.kernel
+    class: SequenceKernel
+  - kind: flat_prompt
+    module: kernels.flat_prompt.kernel
+    class: FlatPromptKernel
+    config_spec:
+      config_schema:
+        type: object
+        properties:
+          user_template:
+            type: object
+            properties:
+              library_id: { type: string }
+              pinned_kernel_version: { type: string }
+              override_body: { type: string }
+            additionalProperties: false
+          system_template:
+            type: object
+            properties:
+              library_id: { type: string }
+              pinned_kernel_version: { type: string }
+              override_body: { type: string }
+            additionalProperties: false
+          inline_evaluation_body: { type: string }
+        additionalProperties: false
+      input_schema:
+        type: object
+        properties:
+          combined_documents: { type: string }
+          tool_results: { type: object }
+          parser_results: { type: object }
+          routine_inputs: { type: object }
+          previous_soap_notes: { type: object }
+          policy_instructions: { type: string }
+          additional_evidence: { type: string }
+          component_tree:
+            type: string
+            description: "Synthetic — rendered subtree markdown"
+        required: [combined_documents, component_tree]
+      output_schema:
+        $ref: "kernel_sdk_types#/KernelSubtreeResult"
+      user_template:
+        default: kernels/flat_prompt/templates/user.jinja2
+        library: []
+      system_template:
+        default: kernels/flat_prompt/templates/system.jinja2
+        library: []
+  - kind: mock
+    module: kernels.mock.kernel
+    class: MockKernel
