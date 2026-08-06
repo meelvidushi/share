@@ -1,0 +1,2171 @@
+{
+  "componentPlacementId": "92e16e47-f9ef-483b-9bb5-a09890285026",
+  "componentId": null,
+  "version": null,
+  "name": "m-05-orc-tt4",
+  "purpose": "Evaluates continued stay requirements for Abdominal Pain using the M-05 ORC table, extended-stay items, clinical care flags, and final decision logic.",
+  "isGlobal": false,
+  "forkedFromComponentId": null,
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": true
+  },
+  "outputSchema": {
+    "decision": "APPROVED | NEEDS_REVIEW"
+  },
+  "runtimeConfig": {
+    "kind": "flat_prompt",
+    "config": {
+      "user_template": {
+        "override_body": "IMPORTANT BUSINESS CONTEXT\nPrecision over recall. Incorrectly approving a case is more harmful than incorrectly pending for human review. An incorrect approval cannot be reversed, while an unnecessary pend can still ultimately be approved by the human reviewer.\nHowever, do NOT pend purely because the chart does not restate the exact milestone phrase. If there is clinically credible evidence attributable to the review date (or clinically relevant carry-forward) AND there is no contradictory same-day evidence, you may treat the milestone as MET.\nREVIEW DATE AND EVIDENCE WINDOW\n- The review date is authoritative and must NOT be replaced by an inferred chart date.\n- Do NOT use evidence dated after review_date to support or refute milestones, flags, or decision outputs.\n- Later-authored documents may be used only for facts explicitly attributed to review_date or earlier.\nVALID VS INVALID EVIDENCE\n- Do NOT use unsupported UR/UM criteria checkboxes or checklist conclusions as evidence.\n- Prefer direct clinical documentation, labs, imaging, procedures, and patient-specific clinician narrative."
+      },
+      "system_template": null,
+      "inline_evaluation_body": "IMPORTANT BUSINESS CONTEXT\nPrecision over recall. Incorrectly approving a case is more harmful than incorrectly pending for human review. An incorrect approval cannot be reversed, while an unnecessary pend can still ultimately be approved by the human reviewer.\nHowever, do NOT pend purely because the chart does not restate the exact milestone phrase. If there is clinically credible evidence attributable to the review date (or clinically relevant carry-forward) AND there is no contradictory same-day evidence, you may treat the milestone as MET.\nREVIEW DATE AND EVIDENCE WINDOW\n- The review date is authoritative and must NOT be replaced by an inferred chart date.\n- Do NOT use evidence dated after review_date to support or refute milestones, flags, or decision outputs.\n- Later-authored documents may be used only for facts explicitly attributed to review_date or earlier.\nVALID VS INVALID EVIDENCE\n- Do NOT use unsupported UR/UM criteria checkboxes or checklist conclusions as evidence.\n- Prefer direct clinical documentation, labs, imaging, procedures, and patient-specific clinician narrative."
+    }
+  },
+  "showOnFeedbackPage": false,
+  "realization": "inline",
+  "inputBindings": [
+    {
+      "targetName": "combined_documents",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "combined_documents",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    },
+    {
+      "targetName": "tool_results",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "tool_results",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    },
+    {
+      "targetName": "parser_results",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "parser_results",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    },
+    {
+      "targetName": "routine_inputs",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "routine_inputs",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    },
+    {
+      "targetName": "previous_soap_notes",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "previous_soap_notes",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    },
+    {
+      "targetName": "policy_instructions",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "policy_instructions",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    },
+    {
+      "targetName": "additional_evidence",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "additional_evidence",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    },
+    {
+      "targetName": "segmented_date",
+      "sourceKind": "host_binding",
+      "hostBindingPath": "segmented_date",
+      "componentPlacementId": null,
+      "componentOutputName": null,
+      "staticValue": null
+    }
+  ],
+  "outputCriteriaLinks": null,
+  "children": [
+    {
+      "componentPlacementId": "47a4fd32-3021-4a32-9b6e-89082bb87317",
+      "componentId": null,
+      "version": null,
+      "name": "Overall ORC Recovery Day",
+      "purpose": "Evaluate all M-05 ORC domains and derive the overall ORC recovery day from anchored domain assignments.",
+      "isGlobal": false,
+      "forkedFromComponentId": null,
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "Reason": "string",
+        "Result": "Derives the Overall ORC Day from validated Domain Day assignments. Does not recalculate domain assignments.",
+        "Overall ORC Recovery Day": "number"
+      },
+      "runtimeConfig": {
+        "kind": "flat_prompt",
+        "config": {
+          "user_template": {
+            "override_body": "Overall ORC aggregation for M-05 Abdominal Pain. Use child domain outputs as the only source of truth. Determine the overall ORC recovery day as the lowest numeric domain day among anchoring domains. Do not recalculate milestone evidence here."
+          },
+          "system_template": {
+            "library_id": "clinical_v1"
+          },
+          "inline_evaluation_body": "Overall ORC aggregation for M-05 Abdominal Pain.\nAnchoring domains: Clinical Status, Activity, Routes.\nNon-anchoring domains: Level of Care, Interventions, Medications.\nEvaluate each domain independently first, then set Overall ORC Recovery Day to the lowest numeric day among anchoring domains with usable assignments. Do not infer new domain assignments here."
+        }
+      },
+      "showOnFeedbackPage": false,
+      "realization": "inline",
+      "inputBindings": null,
+      "outputCriteriaLinks": null,
+      "children": [
+        {
+          "componentPlacementId": "b64503b8-0c77-485b-bc52-3cfee56cad82",
+          "componentId": null,
+          "version": null,
+          "name": "Level of Care Domain",
+          "purpose": "Evaluate Level of Care Domain and assign a day.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "domain": "string",
+            "status": "MET | NOT_MET | MISSING_INFORMATION",
+            "reasoning": "string",
+            "assignment_type": "Verified | Day 1 fallback | UNDETERMINED | Default n due to no usable evidence | Excluded",
+            "domain_day_stage": "number | EXCLUDED | UNDETERMINED",
+            "blocking_recovery_milestones": "ARRAY<string>"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "Domain evaluation for Level of Care Domain (M-05 ORC v30: Abdominal Pain).\n\nThis domain has no bold recovery milestones in M-05 and is excluded from ORC anchoring. Use it for context only.\n\nReview child day outputs in order. Assign the lowest numbered day whose recovery milestones are supported.\nIf this domain has no recovery milestones anywhere in the ORC, set domain_day_stage=EXCLUDED and assignment_type=Excluded.\nIf evidence is insufficient to determine any required recovery milestone, prefer UNDETERMINED.\nReturn status=MET when the domain day assignment is supported, NOT_MET when required recovery milestones are not met, and MISSING_INFORMATION when material evidence is missing.\nBlocking recovery milestones should list the exact unmet or missing recovery milestones that prevent later-day assignment.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+            }
+          },
+          "showOnFeedbackPage": true,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": [
+            {
+              "componentPlacementId": "75e132f3-528c-474b-822d-af6920070621",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_1",
+              "purpose": "Evaluate day 1 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 1 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 1 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "27ed6af9-e007-46de-bb68-306bdf8db8b2",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Floor",
+                  "purpose": "Evaluate whether the Floor milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Floor\nDomain: Level of Care\nDay: 1\nRecovery Milestone: false\nGuideline text: Floor\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "512a7ba5-7456-4094-8873-86bb6c140cd1",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Social Determinants of Health Assessment",
+                  "purpose": "Evaluate whether the Social Determinants of Health Assessment milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Social Determinants of Health Assessment\nDomain: Level of Care\nDay: 1\nRecovery Milestone: false\nGuideline text: Social Determinants of Health Assessment\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "b1d86cbb-5752-4696-811e-940abcc4356c",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Adult Readmission Risk Assessment",
+                  "purpose": "Evaluate whether the Adult Readmission Risk Assessment milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Adult Readmission Risk Assessment\nDomain: Level of Care\nDay: 1\nRecovery Milestone: false\nGuideline text: Adult Readmission Risk Assessment\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "fbd665ed-c0b9-4c11-9dc2-6a3452bacfa0",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Discharge planning",
+                  "purpose": "Evaluate whether the Discharge planning milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Discharge planning\nDomain: Level of Care\nDay: 1\nRecovery Milestone: false\nGuideline text: Discharge planning\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "7da56388-8817-4f90-8b46-cc553fc167dd",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_2",
+              "purpose": "Evaluate day 2 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 2 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 2 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "b54046f6-7bec-4f61-9aee-e7a8aa92485c",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Floor",
+                  "purpose": "Evaluate whether the Floor milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Floor\nDomain: Level of Care\nDay: 2\nRecovery Milestone: false\nGuideline text: Floor\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "816f2faf-dbbd-4843-bfac-67d7f6f139ed",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Social Determinants of Health Assessment",
+                  "purpose": "Evaluate whether the Social Determinants of Health Assessment milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Social Determinants of Health Assessment\nDomain: Level of Care\nDay: 2\nRecovery Milestone: false\nGuideline text: Social Determinants of Health Assessment\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "a4376d11-cb2e-449f-afda-22585c7f85b2",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Adult Readmission Risk Assessment",
+                  "purpose": "Evaluate whether the Adult Readmission Risk Assessment milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Adult Readmission Risk Assessment\nDomain: Level of Care\nDay: 2\nRecovery Milestone: false\nGuideline text: Adult Readmission Risk Assessment\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "39be741a-4f7e-4b7f-8e88-987b5c95b27f",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_3",
+              "purpose": "Evaluate day 3 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 3 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 3 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "9428de3a-a5a9-4b33-a9ee-2bcfa46dd1bd",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Social Determinants of Health Assessment",
+                  "purpose": "Evaluate whether the Social Determinants of Health Assessment milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Social Determinants of Health Assessment\nDomain: Level of Care\nDay: 3\nRecovery Milestone: false\nGuideline text: Social Determinants of Health Assessment\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "0e4c2d75-28da-40b1-bf58-0b3791012271",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Adult Readmission Risk Assessment",
+                  "purpose": "Evaluate whether the Adult Readmission Risk Assessment milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Adult Readmission Risk Assessment\nDomain: Level of Care\nDay: 3\nRecovery Milestone: false\nGuideline text: Adult Readmission Risk Assessment\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "fe103782-6b30-45ed-b19d-48e3f3594f4e",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Floor to discharge",
+                  "purpose": "Evaluate whether the Floor to discharge milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Floor to discharge\nDomain: Level of Care\nDay: 3\nRecovery Milestone: false\nGuideline text: Floor to discharge\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "1d32e572-ef78-4be5-961c-c6df76ec8c2e",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Complete discharge planning",
+                  "purpose": "Evaluate whether the Complete discharge planning milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Complete discharge planning\nDomain: Level of Care\nDay: 3\nRecovery Milestone: false\nGuideline text: Complete discharge planning\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "componentPlacementId": "d6a37673-8e25-46c9-9874-c7a22e87d7a8",
+          "componentId": null,
+          "version": null,
+          "name": "Clinical Status Domain",
+          "purpose": "Evaluate Clinical Status Domain and assign a day.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "domain": "string",
+            "status": "MET | NOT_MET | MISSING_INFORMATION",
+            "reasoning": "string",
+            "assignment_type": "Verified | Day 1 fallback | UNDETERMINED | Default n due to no usable evidence | Excluded",
+            "domain_day_stage": "number | EXCLUDED | UNDETERMINED",
+            "blocking_recovery_milestones": "ARRAY<string>"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "Domain evaluation for Clinical Status Domain (M-05 ORC v30: Abdominal Pain).\n\nThis is an anchoring domain. Recovery milestones are the bolded clinical-status items in days 1, 2, and 3.\n\nReview child day outputs in order. Assign the lowest numbered day whose recovery milestones are supported.\nIf this domain has no recovery milestones anywhere in the ORC, set domain_day_stage=EXCLUDED and assignment_type=Excluded.\nIf evidence is insufficient to determine any required recovery milestone, prefer UNDETERMINED.\nReturn status=MET when the domain day assignment is supported, NOT_MET when required recovery milestones are not met, and MISSING_INFORMATION when material evidence is missing.\nBlocking recovery milestones should list the exact unmet or missing recovery milestones that prevent later-day assignment.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+            }
+          },
+          "showOnFeedbackPage": true,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": [
+            {
+              "componentPlacementId": "76285ed4-b310-457e-9ac7-9160a7f5bca0",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_1",
+              "purpose": "Evaluate day 1 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 1 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 1 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "8335f7fa-dea2-4042-81e3-69ac8b3d69e2",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Clinical Indications met",
+                  "purpose": "Evaluate whether the Clinical Indications met milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Clinical Indications met\nDomain: Clinical Status\nDay: 1\nRecovery Milestone: true\nGuideline text: Clinical Indications met [B]\nInterpretive note: Footnote [B] points back to the admission criteria in this guideline.\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "f506e866-e064-4148-9fe3-0f6f94ddb437",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Acute pain unrelieved by symptomatic treatment",
+                  "purpose": "Evaluate whether the Acute pain unrelieved by symptomatic treatment milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Acute pain unrelieved by symptomatic treatment\nDomain: Clinical Status\nDay: 1\nRecovery Milestone: false\nGuideline text: Acute pain unrelieved by symptomatic treatment\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "9feefe76-51f5-4f5e-b7c1-22795f595b5f",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_2",
+              "purpose": "Evaluate day 2 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 2 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 2 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "74ffe464-fe80-458e-8b79-9a81156e3a65",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Hypotension absent",
+                  "purpose": "Evaluate whether the Hypotension absent milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Hypotension absent\nDomain: Clinical Status\nDay: 2\nRecovery Milestone: true\nGuideline text: Hypotension absent\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "6843cda6-a3d4-4e0f-92cc-2df96a901fd8",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Pain absent or improved",
+                  "purpose": "Evaluate whether the Pain absent or improved milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Pain absent or improved\nDomain: Clinical Status\nDay: 2\nRecovery Milestone: true\nGuideline text: Pain absent or improved\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "0e1d93f0-31bb-4369-8a2e-1eb32520bec7",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Liquid or advanced diet tolerated",
+                  "purpose": "Evaluate whether the Liquid or advanced diet tolerated milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Liquid or advanced diet tolerated\nDomain: Clinical Status\nDay: 2\nRecovery Milestone: true\nGuideline text: Liquid or advanced diet tolerated\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "e44f3253-f1d9-48d7-b8cd-09d7c5dc94d0",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Endoscopy performed or not needed",
+                  "purpose": "Evaluate whether the Endoscopy performed or not needed milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Endoscopy performed or not needed\nDomain: Clinical Status\nDay: 2\nRecovery Milestone: true\nGuideline text: Endoscopy performed or not needed\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "3e38b292-676f-4416-9433-32d1445e202c",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_3",
+              "purpose": "Evaluate day 3 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 3 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 3 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "51b850ec-134f-4e7e-946b-7e15ed385c0f",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Hemodynamic stability",
+                  "purpose": "Evaluate whether the Hemodynamic stability milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Hemodynamic stability\nDomain: Clinical Status\nDay: 3\nRecovery Milestone: true\nGuideline text: Hemodynamic stability\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "967b13a5-ca15-4292-91ea-cdcb6d52b279",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Pain absent or managed",
+                  "purpose": "Evaluate whether the Pain absent or managed milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Pain absent or managed\nDomain: Clinical Status\nDay: 3\nRecovery Milestone: true\nGuideline text: Pain absent or managed\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "3ff68474-7e9c-4ecf-abc9-4e777d5f13fd",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Etiology or finding requiring continued inpatient treatment absent",
+                  "purpose": "Evaluate whether the Etiology or finding requiring continued inpatient treatment absent milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Etiology or finding requiring continued inpatient treatment absent\nDomain: Clinical Status\nDay: 3\nRecovery Milestone: true\nGuideline text: Etiology or finding requiring continued inpatient treatment absent\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "2b104231-6abb-4b09-8425-1f1454db606b",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Discharge plans and education understood",
+                  "purpose": "Evaluate whether the Discharge plans and education understood milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Discharge plans and education understood\nDomain: Clinical Status\nDay: 3\nRecovery Milestone: true\nGuideline text: Discharge plans and education understood\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "componentPlacementId": "b07ed976-3d6f-4a85-ae14-52b012dc54a5",
+          "componentId": null,
+          "version": null,
+          "name": "Activity Domain",
+          "purpose": "Evaluate Activity Domain and assign a day.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "domain": "string",
+            "status": "MET | NOT_MET | MISSING_INFORMATION",
+            "reasoning": "string",
+            "assignment_type": "Verified | Day 1 fallback | UNDETERMINED | Default n due to no usable evidence | Excluded",
+            "domain_day_stage": "number | EXCLUDED | UNDETERMINED",
+            "blocking_recovery_milestones": "ARRAY<string>"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "Domain evaluation for Activity Domain (M-05 ORC v30: Abdominal Pain).\n\nThis is an anchoring domain, but only day 3 contains a recovery milestone in M-05.\n\nReview child day outputs in order. Assign the lowest numbered day whose recovery milestones are supported.\nIf this domain has no recovery milestones anywhere in the ORC, set domain_day_stage=EXCLUDED and assignment_type=Excluded.\nIf evidence is insufficient to determine any required recovery milestone, prefer UNDETERMINED.\nReturn status=MET when the domain day assignment is supported, NOT_MET when required recovery milestones are not met, and MISSING_INFORMATION when material evidence is missing.\nBlocking recovery milestones should list the exact unmet or missing recovery milestones that prevent later-day assignment.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+            }
+          },
+          "showOnFeedbackPage": true,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": [
+            {
+              "componentPlacementId": "aaf8773a-1b8c-4f51-984f-5a15dba78329",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_1",
+              "purpose": "Evaluate day 1 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 1 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 1 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "8d408fee-ec27-49d3-9fc7-1c032fc4e9fc",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Activity as tolerated",
+                  "purpose": "Evaluate whether the Activity as tolerated milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Activity as tolerated\nDomain: Activity\nDay: 1\nRecovery Milestone: false\nGuideline text: Activity as tolerated\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "06f733f4-41ff-48b3-95e5-7c34006f90c5",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_2",
+              "purpose": "Evaluate day 2 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 2 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 2 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "5ebb0189-859d-4ed1-9d2f-e89d4d8c4c8f",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Activity as tolerated",
+                  "purpose": "Evaluate whether the Activity as tolerated milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Activity as tolerated\nDomain: Activity\nDay: 2\nRecovery Milestone: false\nGuideline text: Activity as tolerated\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "3d6c028f-c5ed-492c-ad07-cb2b8b1476aa",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_3",
+              "purpose": "Evaluate day 3 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 3 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 3 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "1d9b1284-586c-413f-abd6-8a1fd0b962b2",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Ambulatory or acceptable for next level of care",
+                  "purpose": "Evaluate whether the Ambulatory or acceptable for next level of care milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Ambulatory or acceptable for next level of care\nDomain: Activity\nDay: 3\nRecovery Milestone: true\nGuideline text: Ambulatory or acceptable for next level of care [C]\nInterpretive note: Footnote [C]: patient is ambulatory or near baseline activity.\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "componentPlacementId": "b3c4aabe-17a1-4c96-be74-71817efc75ea",
+          "componentId": null,
+          "version": null,
+          "name": "Routes Domain",
+          "purpose": "Evaluate Routes Domain and assign a day.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "domain": "string",
+            "status": "MET | NOT_MET | MISSING_INFORMATION",
+            "reasoning": "string",
+            "assignment_type": "Verified | Day 1 fallback | UNDETERMINED | Default n due to no usable evidence | Excluded",
+            "domain_day_stage": "number | EXCLUDED | UNDETERMINED",
+            "blocking_recovery_milestones": "ARRAY<string>"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "Domain evaluation for Routes Domain (M-05 ORC v30: Abdominal Pain).\n\nThis is an anchoring domain, but only day 3 contains recovery milestones in M-05.\n\nReview child day outputs in order. Assign the lowest numbered day whose recovery milestones are supported.\nIf this domain has no recovery milestones anywhere in the ORC, set domain_day_stage=EXCLUDED and assignment_type=Excluded.\nIf evidence is insufficient to determine any required recovery milestone, prefer UNDETERMINED.\nReturn status=MET when the domain day assignment is supported, NOT_MET when required recovery milestones are not met, and MISSING_INFORMATION when material evidence is missing.\nBlocking recovery milestones should list the exact unmet or missing recovery milestones that prevent later-day assignment.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+            }
+          },
+          "showOnFeedbackPage": true,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": [
+            {
+              "componentPlacementId": "d26e75d3-841e-43f8-8f0c-ecfa44ed8384",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_1",
+              "purpose": "Evaluate day 1 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 1 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 1 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "3dce1a27-e908-4be4-8c85-9c2dc9357465",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Possible NPO",
+                  "purpose": "Evaluate whether the Possible NPO milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Possible NPO\nDomain: Routes\nDay: 1\nRecovery Milestone: false\nGuideline text: Possible NPO\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "168f27b1-2c2d-4742-a7fc-cee5d6916298",
+                  "componentId": null,
+                  "version": null,
+                  "name": "IV fluids",
+                  "purpose": "Evaluate whether the IV fluids milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: IV fluids\nDomain: Routes\nDay: 1\nRecovery Milestone: false\nGuideline text: IV fluids\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "a54ac2c6-af39-4871-bfe2-b66320609095",
+                  "componentId": null,
+                  "version": null,
+                  "name": "IV medications",
+                  "purpose": "Evaluate whether the IV medications milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: IV medications\nDomain: Routes\nDay: 1\nRecovery Milestone: false\nGuideline text: IV medications\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "0200273b-a534-4369-afc4-555ffa043198",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_2",
+              "purpose": "Evaluate day 2 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 2 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 2 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "c9719ef2-4061-45c8-a459-f1e735018905",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Oral or IV fluids",
+                  "purpose": "Evaluate whether the Oral or IV fluids milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Oral or IV fluids\nDomain: Routes\nDay: 2\nRecovery Milestone: false\nGuideline text: Oral or IV fluids\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "8e117a56-62cf-4580-8a53-929f5f9cb99a",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Oral or IV medications",
+                  "purpose": "Evaluate whether the Oral or IV medications milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Oral or IV medications\nDomain: Routes\nDay: 2\nRecovery Milestone: false\nGuideline text: Oral or IV medications\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "c9da0a91-58a7-478c-8978-1e994f912d6e",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Advance diet",
+                  "purpose": "Evaluate whether the Advance diet milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Advance diet\nDomain: Routes\nDay: 2\nRecovery Milestone: false\nGuideline text: Advance diet\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "454902bc-0055-4c16-9e4a-e1b55e9d82a3",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_3",
+              "purpose": "Evaluate day 3 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 3 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 3 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "7b027687-ac3d-468f-90b4-dc551769c3c3",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Oral hydration",
+                  "purpose": "Evaluate whether the Oral hydration milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Oral hydration\nDomain: Routes\nDay: 3\nRecovery Milestone: true\nGuideline text: Oral hydration [D]\nInterpretive note: Footnote [D]: hydration may be met by alternative means such as PEG.\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "f1098682-ef19-4875-bc77-9aa4550fffdc",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Oral medications or regimen acceptable for next level of care",
+                  "purpose": "Evaluate whether the Oral medications or regimen acceptable for next level of care milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Oral medications or regimen acceptable for next level of care\nDomain: Routes\nDay: 3\nRecovery Milestone: true\nGuideline text: Oral medications or regimen acceptable for next level of care\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "4cdcbaf7-1d96-4304-8be3-a43c055a320e",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Oral diet or acceptable for next level of care",
+                  "purpose": "Evaluate whether the Oral diet or acceptable for next level of care milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Oral diet or acceptable for next level of care\nDomain: Routes\nDay: 3\nRecovery Milestone: true\nGuideline text: Oral diet or acceptable for next level of care\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to true.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "componentPlacementId": "05e10d60-006f-4ba8-a6f8-52d2551153c8",
+          "componentId": null,
+          "version": null,
+          "name": "Interventions Domain",
+          "purpose": "Evaluate Interventions Domain and assign a day.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "domain": "string",
+            "status": "MET | NOT_MET | MISSING_INFORMATION",
+            "reasoning": "string",
+            "assignment_type": "Verified | Day 1 fallback | UNDETERMINED | Default n due to no usable evidence | Excluded",
+            "domain_day_stage": "number | EXCLUDED | UNDETERMINED",
+            "blocking_recovery_milestones": "ARRAY<string>"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "Domain evaluation for Interventions Domain (M-05 ORC v30: Abdominal Pain).\n\nThis domain has no bold recovery milestones in M-05 and is excluded from ORC anchoring.\n\nReview child day outputs in order. Assign the lowest numbered day whose recovery milestones are supported.\nIf this domain has no recovery milestones anywhere in the ORC, set domain_day_stage=EXCLUDED and assignment_type=Excluded.\nIf evidence is insufficient to determine any required recovery milestone, prefer UNDETERMINED.\nReturn status=MET when the domain day assignment is supported, NOT_MET when required recovery milestones are not met, and MISSING_INFORMATION when material evidence is missing.\nBlocking recovery milestones should list the exact unmet or missing recovery milestones that prevent later-day assignment.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+            }
+          },
+          "showOnFeedbackPage": true,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": [
+            {
+              "componentPlacementId": "520265f7-8877-4f24-9d81-ce0dd38b28b0",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_1",
+              "purpose": "Evaluate day 1 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 1 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 1 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "e70a8864-a58b-4587-8eb2-9133b424b55e",
+                  "componentId": null,
+                  "version": null,
+                  "name": "CBC, chemistries, urinalysis, pregnancy test",
+                  "purpose": "Evaluate whether the CBC, chemistries, urinalysis, pregnancy test milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: CBC, chemistries, urinalysis, pregnancy test\nDomain: Interventions\nDay: 1\nRecovery Milestone: false\nGuideline text: CBC, chemistries, urinalysis, pregnancy test\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "93658ab3-e5f5-485c-828e-73a4dcf98edd",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Possible surgical consultation",
+                  "purpose": "Evaluate whether the Possible surgical consultation milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Possible surgical consultation\nDomain: Interventions\nDay: 1\nRecovery Milestone: false\nGuideline text: Possible surgical consultation\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                },
+                {
+                  "componentPlacementId": "dbc98855-0bff-4307-8c14-9c97356e061b",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Possible endoscopy, ultrasound, CT scan, MRI",
+                  "purpose": "Evaluate whether the Possible endoscopy, ultrasound, CT scan, MRI milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Possible endoscopy, ultrasound, CT scan, MRI\nDomain: Interventions\nDay: 1\nRecovery Milestone: false\nGuideline text: Possible endoscopy, ultrasound, CT scan, MRI\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "7572535c-644b-4082-aae5-dac64c253087",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_2",
+              "purpose": "Evaluate day 2 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 2 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 2 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "a238144d-c224-493f-ae97-74a3eeb86185",
+                  "componentId": null,
+                  "version": null,
+                  "name": "CBC, chemistries",
+                  "purpose": "Evaluate whether the CBC, chemistries milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: CBC, chemistries\nDomain: Interventions\nDay: 2\nRecovery Milestone: false\nGuideline text: CBC, chemistries\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "308be217-7d83-4d3d-87bb-24ac02e2998d",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_3",
+              "purpose": "Evaluate day 3 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 3 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 3 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "c3e522e0-94cd-4de0-a915-cfc88cdc4a89",
+                  "componentId": null,
+                  "version": null,
+                  "name": "CBC, chemistries",
+                  "purpose": "Evaluate whether the CBC, chemistries milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: CBC, chemistries\nDomain: Interventions\nDay: 3\nRecovery Milestone: false\nGuideline text: CBC, chemistries\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "componentPlacementId": "87c8c22d-2b9d-4ee4-b8a8-aa4bd1336e37",
+          "componentId": null,
+          "version": null,
+          "name": "Medications Domain",
+          "purpose": "Evaluate Medications Domain and assign a day.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "domain": "string",
+            "status": "MET | NOT_MET | MISSING_INFORMATION",
+            "reasoning": "string",
+            "assignment_type": "Verified | Day 1 fallback | UNDETERMINED | Default n due to no usable evidence | Excluded",
+            "domain_day_stage": "number | EXCLUDED | UNDETERMINED",
+            "blocking_recovery_milestones": "ARRAY<string>"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "Domain evaluation for Medications Domain (M-05 ORC v30: Abdominal Pain).\n\nThis domain has no bold recovery milestones in M-05 and is excluded from ORC anchoring.\n\nReview child day outputs in order. Assign the lowest numbered day whose recovery milestones are supported.\nIf this domain has no recovery milestones anywhere in the ORC, set domain_day_stage=EXCLUDED and assignment_type=Excluded.\nIf evidence is insufficient to determine any required recovery milestone, prefer UNDETERMINED.\nReturn status=MET when the domain day assignment is supported, NOT_MET when required recovery milestones are not met, and MISSING_INFORMATION when material evidence is missing.\nBlocking recovery milestones should list the exact unmet or missing recovery milestones that prevent later-day assignment.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+            }
+          },
+          "showOnFeedbackPage": true,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": [
+            {
+              "componentPlacementId": "dea5daa3-266c-4a96-8c70-7c39d9ac2277",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_1",
+              "purpose": "Evaluate day 1 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 1 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 1 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "60d2d082-3936-40ae-baa0-0d3abdd9d0f5",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Possible analgesics",
+                  "purpose": "Evaluate whether the Possible analgesics milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Possible analgesics\nDomain: Medications\nDay: 1\nRecovery Milestone: false\nGuideline text: Possible analgesics\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "c16598c7-c463-44bc-8188-9c12fd784a5e",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_2",
+              "purpose": "Evaluate day 2 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 2 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 2 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "15929f60-953b-4f05-a22e-bbf04d9592f2",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Possible analgesics",
+                  "purpose": "Evaluate whether the Possible analgesics milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Possible analgesics\nDomain: Medications\nDay: 2\nRecovery Milestone: false\nGuideline text: Possible analgesics\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "componentPlacementId": "3833c8f1-6d67-4c04-8968-4b09c4ef0f26",
+              "componentId": null,
+              "version": null,
+              "name": "DAY_3",
+              "purpose": "Evaluate day 3 milestones for this domain.",
+              "isGlobal": false,
+              "forkedFromComponentId": null,
+              "inputSchema": null,
+              "outputSchema": {
+                "items": "array",
+                "status": "MET | NOT_MET | MISSING_INFORMATION",
+                "reasoning": "STRING: But should highlight the RECOVERY MILESTONES that led to the decision. should not use words like rolled up to this day but very specifically anchor on exact reason"
+              },
+              "runtimeConfig": {
+                "kind": "flat_prompt",
+                "config": {
+                  "inline_evaluation_body": "Evaluate only the day 3 milestones in this domain. Recovery milestones are only the items marked as Recovery Milestone=true in the child outputs.\n\nSet status=MET only when the recovery milestones needed to support day 3 are supported by review-date evidence.\nSet status=NOT_MET when evidence shows one or more required recovery milestones are not satisfied.\nSet status=MISSING_INFORMATION when material recovery milestones cannot be determined from valid evidence.\n\nReasoning must cite the exact recovery milestones and summarize why they are met, not met, or missing.\n\nAggregation rule for this component (retired structured combinator, folded into prose): this component's result is MET if at least one direct child result is MET (logical OR across direct children). Combine only this component's direct child results; do not reach into grandchildren except through their own parent."
+                }
+              },
+              "showOnFeedbackPage": true,
+              "realization": "inline",
+              "inputBindings": null,
+              "outputCriteriaLinks": null,
+              "children": [
+                {
+                  "componentPlacementId": "05e301d8-a55f-49fa-9f72-45314df002e6",
+                  "componentId": null,
+                  "version": null,
+                  "name": "Possible analgesics",
+                  "purpose": "Evaluate whether the Possible analgesics milestone is supported by clinical documentation.",
+                  "isGlobal": false,
+                  "forkedFromComponentId": null,
+                  "inputSchema": null,
+                  "outputSchema": {
+                    "Reason": "string",
+                    "status": "MET | NOT_MET | MISSING_INFORMATION",
+                    "Recovery Milestone": "boolean"
+                  },
+                  "runtimeConfig": {
+                    "kind": "flat_prompt",
+                    "config": {
+                      "inline_evaluation_body": "Milestone: Possible analgesics\nDomain: Medications\nDay: 3\nRecovery Milestone: false\nGuideline text: Possible analgesics\nUse only valid patient-specific review-date evidence.\nReturn status=MET, NOT_MET, or MISSING_INFORMATION.\nSet Recovery Milestone to false.\nNon-recovery milestones may provide context but do not determine ORC day assignment."
+                    }
+                  },
+                  "showOnFeedbackPage": true,
+                  "realization": "inline",
+                  "inputBindings": null,
+                  "outputCriteriaLinks": null,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "componentPlacementId": "5eb7652a-e88e-4a5a-9b1e-1782b5d474e3",
+      "componentId": null,
+      "version": null,
+      "name": "Extended Stay Items",
+      "purpose": "Evaluate M-05 extended-stay reasons that may support inpatient stay beyond goal LOS.",
+      "isGlobal": false,
+      "forkedFromComponentId": null,
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "reasoning": "string",
+        "extended_stay_support": "PRESENT | ABSENT | UNDETERMINED"
+      },
+      "runtimeConfig": {
+        "kind": "flat_prompt",
+        "config": {
+          "user_template": {
+            "override_body": "Evaluate whether review-date evidence shows clinically meaningful support for continued inpatient stay beyond the M-150 goal length of stay. Return PRESENT only when there is a clinically meaningful unresolved inpatient-support signal beyond routine recovery. Return ABSENT when no such signal exists. Return UNDETERMINED only when evidence is too sparse or timing is unclear."
+          },
+          "system_template": {
+            "override_body": "\n"
+          },
+          "inline_evaluation_body": "Evaluate the M-05 extended-stay items independently. PRESENT if at least one child item is actively supporting continued inpatient stay on the review date. ABSENT if all are absent or only historical/contextual. UNDETERMINED if material items cannot be assessed."
+        }
+      },
+      "showOnFeedbackPage": false,
+      "realization": "inline",
+      "inputBindings": null,
+      "outputCriteriaLinks": null,
+      "children": [
+        {
+          "componentPlacementId": "8196be4f-330f-41cb-8248-669df9caff64",
+          "componentId": null,
+          "version": null,
+          "name": "Failure to meet discharge criteria (recovery milestones within final day in Optimal Recovery Course)",
+          "purpose": "Evaluate whether final-day discharge criteria are not met.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Reason": "string",
+            "Result": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "item: Failure to meet discharge criteria (recovery milestones within final day in Optimal Recovery Course)\ncriteria: One or more final-day recovery milestones in M-05 day 3 are not met on the review date.\ncriteria_logic: Any unmet final-day recovery milestone can support extended stay.\nduration: brief\nevaluation_source: ORC_derived\nRules: Use patient-specific review-date evidence and the day 3 ORC milestones only."
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        },
+        {
+          "componentPlacementId": "d96a4d6e-4300-4561-846f-97789d5c357f",
+          "componentId": null,
+          "version": null,
+          "name": "Surgery (eg, colectomy, revascularization procedure) needed",
+          "purpose": "Evaluate whether surgery is needed and supports extended stay.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Reason": "string",
+            "Result": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "item: Surgery needed\ncriteria: Surgery or other operative intervention is needed for the abdominal pain etiology and requires continued inpatient stay.\ncriteria_logic: Any qualifying surgery need supports the item.\nduration: varies depending on condition\nevaluation_source: Clinical documentation\nRules: Tie support to patient-specific clinical need, not generic guideline text."
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        },
+        {
+          "componentPlacementId": "68f34e63-51ae-467b-91b7-ae50dbc51eab",
+          "componentId": null,
+          "version": null,
+          "name": "Persistent abdominal pain with suspected significant intra-abdominal process",
+          "purpose": "Evaluate whether ongoing abdominal pain with suspected significant process supports extended stay.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Reason": "string",
+            "Result": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "item: Persistent abdominal pain with suspected significant intra-abdominal process\ncriteria: Persistent abdominal pain remains active and there is suspected significant intra-abdominal pathology requiring further diagnostic or surgical intervention.\ncriteria_logic: Any qualifying active condition supports the item.\nduration: Expect brief stay extension.\nevaluation_source: Clinical documentation\nRules: Do not count historical pain alone; require active same-day support."
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        },
+        {
+          "componentPlacementId": "ab8a8ed9-5d6d-41e6-a876-a108e100343f",
+          "componentId": null,
+          "version": null,
+          "name": "Diagnosed condition requiring continued stay",
+          "purpose": "Evaluate whether a diagnosed condition requires continued inpatient stay.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Reason": "string",
+            "Result": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "item: Diagnosed condition requiring continued stay\ncriteria: A diagnosed condition such as pancreatitis, ischemic bowel, GI bleeding, complicated diverticulitis, or neutropenic enterocolitis requires ongoing inpatient treatment.\ncriteria_logic: Any qualifying diagnosis requiring continued stay supports the item.\nduration: varies depending on condition\nevaluation_source: Clinical documentation\nRules: Tie support to active same-day inpatient treatment needs."
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "componentPlacementId": "cbd6b39a-108f-4a56-87a3-c968058cbb54",
+      "componentId": null,
+      "version": null,
+      "name": "Clinical Care Flags",
+      "purpose": "Evaluate delay and discharge-readiness alert flags only.",
+      "isGlobal": false,
+      "forkedFromComponentId": null,
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "Reason": "string",
+        "Result": "Numeric value from 0 to number of flags(4).",
+        "TOTAL_FLAG_IDENTIFIED": "Numeric value from 0 to number of flags(4)."
+      },
+      "runtimeConfig": {
+        "kind": "flat_prompt",
+        "config": {
+          "user_template": {
+            "override_body": "Evaluate ONLY the M-150 review-date clinical care flags. Treat flags as review-posture signals only. flags_result=true only if any flag is PRESENT."
+          },
+          "system_template": {
+            "override_body": "Return only valid JSON matching the output schema. If evidence timing is unclear, prefer MISSING_INFORMATION over guessing. Do not use future-dated evidence. Do not use UR/UM checklist conclusions as evidence."
+          },
+          "inline_evaluation_body": "Evaluate each flag against clinical documentation on the review date.\n\nIf any of the child flag is present, output will be flag present.\nClinical Care Flags are review posture modifiers evaluated after ORC and Extended Stay. They can block a criteria-met path but cannot create one. \n\n\nRules:\n\n-Flags do not change milestone classifications, domain assignments, ORC derivation, or Extended Stay status \n\n-Non-clinical delay (placement, administrative, transportation, patient/family preference) does not support continued inpatient necessity \n\n-DC-ready requires same-day documentation from the managing team indicating medical readiness for discharge \u2014 planning language alone does not establish DC-ready \n\n-A pending procedure supports inpatient necessity only when tied to a valid ORC assignment, an\u202fACTIVE_SUPPORTING\u202fExtended Stay item, or an explicit policy-specific rule \u2014 scheduling or availability delays alone do not support stay \n\n-A clinically indicated pending procedure tied to active treatment does not block a criteria-met path when independent clinical support exists \u2014 see Clinical Care Flag Impact, Pending Procedure impact rule \n\n-Do not use delay to erase independent clinical support when a valid ORC below\u202fn\u202for\u202fACTIVE_SUPPORTING\u202fExtended Stay item exists "
+        }
+      },
+      "showOnFeedbackPage": false,
+      "realization": "inline",
+      "inputBindings": null,
+      "outputCriteriaLinks": null,
+      "children": [
+        {
+          "componentPlacementId": "7c5e51ee-9e2c-4fe7-976c-3a487d0b1378",
+          "componentId": null,
+          "version": null,
+          "name": "Delay in Care",
+          "purpose": "A Delay in Care is postponement of a clinically indicated service, procedure, or treatment attributable primarily to non-clinical factors. It does not support inpatient medical necessity unless independent clinical justification exists.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Reason": "string",
+            "Result": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "A Delay in Care is postponement of a clinically indicated service, procedure, or treatment attributable primarily to non-clinical factors. It does not support inpatient medical necessity unless independent clinical justification exists.\n\nCommon non-clinical causes:\n\nOR/procedure suite/service availability\nProvider/proceduralist scheduling preferences\nWeekends/holidays/staffing limitations\nAdministrative/insurance authorization\nMulti-day procedure scheduling delay without clinical instability\nNot considered delay:\n\nPostponement required for clinical optimization or patient safety (unstable vitals, active infection, metabolic derangements)\nSource control needed\nCulture finalization\nProcedure scheduled for the following day without indication of delay\nIf the record is unclear whether continued hospitalization is due to active clinical need or delay, evaluate for affirmative same-day evidence of inpatient-level clinical need. If absent, treat as potential delay rather than defaulting to clinical necessity.\n\n\nConditions to determine, conditional status/output:\nIf present, flag conditional status is TRUE \nIf not present, flag conditional status is False \nIf undetermined, flag conditional status is False "
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        },
+        {
+          "componentPlacementId": "452977e4-ad14-4f84-a2fe-6ef2f078c60f",
+          "componentId": null,
+          "version": null,
+          "name": "Delay in Disposition",
+          "purpose": "Describe what this component is responsible for.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Result": "string",
+            "Reason for Delay in disposition": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "A patient has a delay in disposition when:\n\nAll required recovery milestones are met, AND\nNo ongoing acute hospital needs exist, AND\nThe patient remains hospitalized solely due to non-clinical placement/transfer/logistics\nNon-clinical disposition factors (do not support inpatient care):\n\nAwaiting SNF/NF/LTACH placement\nAwaiting bed availability\nAwaiting transfer paperwork/acceptance\nAwaiting transportation\nAwaiting guardian consent/administrative clearance\nPatient or family preference for discharge timing\nClinical disposition factors (may support inpatient care):\n\nAwaiting clinical improvement\nAwaiting medical stabilization\nOngoing active treatment or monitoring\nOngoing inpatient-level decision making\n\n\nConditions to determine, conditional status/output:\nIf present, flag conditional status is TRUE \nIf not present, flag conditional status is False \nIf undetermined, flag conditional status is False "
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        },
+        {
+          "componentPlacementId": "7afe9003-6a4d-4629-86ac-3e1d89351f09",
+          "componentId": null,
+          "version": null,
+          "name": "DC-Ready Flag",
+          "purpose": "Describe what this component is responsible for.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Reason": "string",
+            "Result": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "he DC-Ready flag is affirmative-only. Allowed states: Present or Not Present. Do not classify as undetermined or indeterminate.\n\nPresent only when same-day documentation from the primary managing team or responsible attending provider clearly indicates the patient is medically stable and appropriate for discharge from acute inpatient care.\n\nAcceptable documentation:\n\n\"Medically ready for discharge\"\n\"Stable for discharge\"\n\"Cleared for discharge\"\n\"No further inpatient medical needs\"\n\"Appropriate for discharge once placement arranged\"\nNot acceptable:\n\nDischarge planning activity\nAnticipated or administrative discharge dates\nInferred milestone completion\nAbsence of documented active needs\nIf no affirmative DC-ready documentation exists, classify as Not Present. This is not an evidence gap requiring review.\n\nDC-Ready Present does not override evidence of active inpatient medical needs, clinically necessary pending procedures, or unresolved treatment decisions.\n\nConditions to determine, conditional status/output:\nIf present, flag conditional status is TRUE \nIf not present, flag conditional status is False \n"
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        },
+        {
+          "componentPlacementId": "27672bc6-2f71-4c89-842f-fa0c6eca9013",
+          "componentId": null,
+          "version": null,
+          "name": "Clinical Care Flag Impact",
+          "purpose": "Describe what this component is responsible for.",
+          "isGlobal": false,
+          "forkedFromComponentId": null,
+          "inputSchema": null,
+          "outputSchema": {
+            "Reason": "string",
+            "Result": "string"
+          },
+          "runtimeConfig": {
+            "kind": "flat_prompt",
+            "config": {
+              "inline_evaluation_body": "Flags are review-posture alerts, not evidence-gap triggers. Only Present flags change review posture, subject to the rules below.\n\nActive treatment, ongoing inpatient recovery needs, or unresolved treatment decisions weigh against non-clinical delay flags being Present. This is independent of DC-Ready status.\n\nPending Procedure impact rule: A Pending Procedure/Intervention flag classified as present does not trigger review posture impact when both conditions are met:\n\nThe pending procedure is clinically indicated and tied to active inpatient treatment (not scheduling or availability delay alone), AND\nAt least one independent clinical support path exists (ORC below n or Extended Stay PRESENT)\nWhen both conditions are met, the pending procedure reinforces continued inpatient necessity. Note the pending procedure in reasoning but set review_posture_impact to false.\n\nPending Procedure triggers review posture impact when:\n\nThe patient is otherwise at or near discharge readiness and the procedure is the primary reason for continued stay, OR\nThe stay appears driven by scheduling, availability, or logistics rather than active clinical need\nIf all flags are Not Present, the review posture impact is: does not change review posture.\n\nConditions to determine, conditional status/output:\nIf present, flag conditional status is TRUE \nIf not present, flag conditional status is False \nIf undetermined, flag conditional status is False "
+            }
+          },
+          "showOnFeedbackPage": false,
+          "realization": "inline",
+          "inputBindings": null,
+          "outputCriteriaLinks": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "componentPlacementId": "b900756a-666f-4d9c-9d51-593db34dc50b",
+      "componentId": null,
+      "version": null,
+      "name": "Final Decision",
+      "purpose": "Render final M-05 ORC decision from overall day, extended stay, and flags.",
+      "isGlobal": false,
+      "forkedFromComponentId": null,
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "status": "MET | NOT_MET | MISSING_INFORMATION",
+        "FINAL_DECISION": "APPROVED | NEEDS_REVIEW",
+        "final_decision_summary": "string"
+      },
+      "runtimeConfig": {
+        "kind": "flat_prompt",
+        "config": {
+          "user_template": {
+            "override_body": "Use ONLY the outputs of Overall ORC Recovery Day, Extended Stay Items, and Clinical Care Flags as source of truth. APPROVED iff either the overall ORC day is numeric and less than the max ORC day with no flags present, or extended stay support is PRESENT with no flags present. NEEDS_REVIEW otherwise. Do not recalculate upstream outputs. Return status=MET, NOT_MET, or MISSING_INFORMATION with the final decision."
+          },
+          "system_template": {
+            "override_body": "Return only valid JSON matching the output schema. If evidence timing is unclear, prefer MISSING_INFORMATION over guessing. Do not use future-dated evidence. Do not use UR/UM checklist conclusions as evidence."
+          },
+          "inline_evaluation_body": "Relevant Text From Source\nGoal Length of Stay: 2 days. Max ORC day is 3. Extended Stay section present. ORC table days shown are 1, 2, and 3.\n\nApproval Logic\n(Overall ORC Recovery Day is less than the max ORC day OR Extended Stay Items is PRESENT) AND Clinical Care Flags output is False\n\nNeeds-review Logic\nClinical Care Flags output is True OR (Overall ORC Recovery Day equals max ORC day AND Extended Stay Items is ABSENT or UNDETERMINED).\n\nReturn status=MET, NOT_MET, or MISSING_INFORMATION in addition to FINAL_DECISION and final_decision_summary."
+        }
+      },
+      "showOnFeedbackPage": true,
+      "realization": "inline",
+      "inputBindings": null,
+      "outputCriteriaLinks": null,
+      "children": []
+    }
+  ]
+}
