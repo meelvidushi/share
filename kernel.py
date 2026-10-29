@@ -133,6 +133,42 @@ def _evidence_from_payload(payload: Any) -> ComponentEvidence:
     return ComponentEvidence.model_validate(evidence)
 
 
+_MISSING_COMPONENT_ID = "<missing component_id>"
+# Keys of the result wrapper itself; anything else at the top level is a flattened output field.
+_WRAPPER_KEYS = frozenset(
+    {"component_id", "output", "reasoning", "evidence", "sub_results", "children"}
+)
+_OUTPUT_KEY_ALIASES = ("result", "outputs")
+
+
+def _output_from_payload(payload: Mapping[str, Any]) -> Any:
+    """
+    Return the component output from `payload`, tolerating shapes some models return.
+
+    GPT-6 Sol/Luna sometimes JSON-encode `output` as a string, name it `result`/`outputs`, or
+    flatten its fields next to the wrapper keys. Anything else is returned as-is for the
+    caller to reject.
+
+    Parameters
+    ----------
+    payload: Mapping[str, Any]
+        LLM JSON payload for a single component
+    """
+    output = payload.get("output")
+    if isinstance(output, str):
+        try:
+            return json.loads(output)
+        except json.JSONDecodeError:
+            return output
+    if output is not None:
+        return output
+    for alias in _OUTPUT_KEY_ALIASES:
+        if isinstance(payload.get(alias), dict):
+            return payload[alias]
+    flattened = {key: value for key, value in payload.items() if key not in _WRAPPER_KEYS}
+    return flattened or None
+
+
 def _result_from_payload(
     payload: Mapping[str, Any], *, kernel_kind: str
 ) -> KernelSubtreeResult:
@@ -146,11 +182,12 @@ def _result_from_payload(
     kernel_kind: str
         Kernel kind to record on each constructed result
     """
+    # `_align_component_ids` stamps the real id afterwards, so a missing one is not fatal here.
     component_id = payload.get("component_id")
     if not isinstance(component_id, str) or not component_id:
-        raise KernelValidationError("LLM result is missing component_id")
+        component_id = _MISSING_COMPONENT_ID
 
-    output = payload.get("output")
+    output = _output_from_payload(payload)
     if not isinstance(output, dict):
         raise KernelValidationError(
             f"LLM result for {component_id} is missing object output"
