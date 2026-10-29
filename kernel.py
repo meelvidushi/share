@@ -207,6 +207,37 @@ def _collect_component_ids(node: ResolvedComponentNode) -> set[str]:
     }
 
 
+def _align_component_ids(
+    node: ResolvedComponentNode, result: KernelSubtreeResult
+) -> None:
+    """
+    Stamp `node`'s known component ids onto `result` instead of trusting the LLM to echo them.
+
+    Some models (GPT-6 Sol/Luna) return the right structure with dropped or placeholder ids, which
+    would otherwise fail coverage validation. Children whose ids already match are paired by id;
+    otherwise they are paired by position, since the prompt requires rendered order. A child-count
+    mismatch is left untouched so `_validate_component_coverage` still reports it.
+
+    Parameters
+    ----------
+    node: ResolvedComponentNode
+        Resolved subtree the LLM was asked to evaluate
+    result: KernelSubtreeResult
+        Result mapped from the LLM payload, updated in place
+    """
+    result.component_id = node.component_id
+    if len(result.children) != len(node.children):
+        return
+    children_by_id = {child.component_id: child for child in node.children}
+    returned_ids = [child.component_id for child in result.children]
+    if sorted(returned_ids) == sorted(children_by_id):
+        pairs = [(children_by_id[child.component_id], child) for child in result.children]
+    else:
+        pairs = list(zip(node.children, result.children))
+    for child_node, child_result in pairs:
+        _align_component_ids(child_node, child_result)
+
+
 def _validate_component_coverage(
     node: ResolvedComponentNode, result: KernelSubtreeResult
 ) -> None:
@@ -493,6 +524,7 @@ class FlatPromptKernel(Kernel):
             if "decision" in result.output
             else {}
         )
+        _align_component_ids(node, result)
         _validate_component_coverage(node, result)
         runtime_context.store_node_result(result.node_id or result.component_id, result)
         return result
