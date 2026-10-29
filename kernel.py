@@ -275,6 +275,66 @@ def _align_component_ids(
         _align_component_ids(child_node, child_result)
 
 
+def _restructure_by_component_id(
+    node: ResolvedComponentNode, result: KernelSubtreeResult
+) -> KernelSubtreeResult:
+    """
+    Rebuild `result` so its nesting mirrors `node`, placing each returned result by component id.
+
+    Coverage validation only compares id sets, so a result with every id present but nested or
+    duplicated differently (seen with GPT-6 Sol/Luna) used to pass and then fail the host's
+    one-to-one child pairing. When every expected id was returned exactly where it can be
+    found, the first result for each id is moved into place and extras are dropped; otherwise
+    `result` is returned unchanged for validation to reject.
+
+    Parameters
+    ----------
+    node: ResolvedComponentNode
+        Resolved subtree the LLM was asked to evaluate
+    result: KernelSubtreeResult
+        Result mapped from the LLM payload, with ids already aligned
+    """
+    expected_ids = _collect_component_ids(node)
+    if len(expected_ids) != _count_nodes(node):
+        return result  # A component placed twice can't be located by id alone.
+    returned: dict[str, KernelSubtreeResult] = {}
+
+    def index(result_node: KernelSubtreeResult) -> None:
+        returned.setdefault(result_node.component_id, result_node)
+        for child in result_node.children:
+            index(child)
+
+    index(result)
+    if not expected_ids <= returned.keys():
+        return result
+
+    def build(tree_node: ResolvedComponentNode) -> KernelSubtreeResult:
+        placed = returned[tree_node.component_id]
+        placed.children = [build(child) for child in tree_node.children]
+        return placed
+
+    return build(node)
+
+
+def _count_nodes(node: ResolvedComponentNode) -> int:
+    """Return the number of nodes in `node`'s subtree (inclusive)."""
+    return 1 + sum(_count_nodes(child) for child in node.children)
+
+
+def _validate_component_structure(
+    node: ResolvedComponentNode, result: KernelSubtreeResult
+) -> None:
+    """Raise `KernelValidationError` unless `result` has one child per `node` child, in order."""
+    if [child.component_id for child in result.children] != [
+        child.component_id for child in node.children
+    ]:
+        raise KernelValidationError(
+            f"LLM result children for {node.component_id} do not match the component tree"
+        )
+    for child_node, child_result in zip(node.children, result.children):
+        _validate_component_structure(child_node, child_result)
+
+
 def _validate_component_coverage(
     node: ResolvedComponentNode, result: KernelSubtreeResult
 ) -> None:
@@ -562,6 +622,8 @@ class FlatPromptKernel(Kernel):
             else {}
         )
         _align_component_ids(node, result)
+        result = _restructure_by_component_id(node, result)
         _validate_component_coverage(node, result)
+        _validate_component_structure(node, result)
         runtime_context.store_node_result(result.node_id or result.component_id, result)
         return result
